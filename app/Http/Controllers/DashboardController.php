@@ -37,7 +37,8 @@ class DashboardController extends Controller
 
     public function indexSTudent()
     {
-        // Static stats for the Student's personal dashboard
+        $studentId = \Illuminate\Support\Facades\Auth::id();
+
         $stats = [
             'enrolled_classes' => 4,
             'attendance_percentage' => 95,
@@ -45,7 +46,22 @@ class DashboardController extends Controller
             'current_gpa' => 3.85
         ];
 
-        return view('dashboardStudent', compact('stats'));
+        // 🟢 Fetch Approved Makeup Sessions from the Live Calendar Engine
+        $approvedMakeups = \App\Models\ClassSchedule::where('reschedule_student_id', $studentId)
+            ->where('is_temporary', true)
+            ->with(['classModule.subject', 'tutor'])
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        // 🔴 NEW: Fetch Rejected Requests directly from the Log Table history
+        $rejectedRequests = \App\Models\RescheduleRequest::where('student_id', $studentId)
+            ->where('status', 'rejected')
+            ->with(['classModule.subject', 'tutor'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // Pass everything to the view layout
+        return view('dashboardStudent', compact('stats', 'approvedMakeups', 'rejectedRequests'));
     }
     /**
      * Show the form for creating a new resource.

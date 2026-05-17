@@ -121,130 +121,255 @@ class TutorRegistrationController extends Controller
     //     return redirect()->route('login')->with('status', 'Application submitted! Admin will review your qualification score soon.');
     // }
 
+    // public function store(Request $request)
+    // {
+    // //    dd($request->all());
+    //     $request->validate([
+    //         'name'                => ['required', 'string', 'max:255'],
+    //         'email'               => ['required', 'string', 'email', 'max:255', 'unique:users'],
+    //         'password'            => Hash::make(\Illuminate\Support\Str::random(16)),
+    //         'age'                 => ['required', 'numeric'],
+    //         'address'             => ['required', 'string'],
+    //         'experience'          => ['required', 'numeric'],
+    //         'education_level_id'  => ['required','exists:education_level,id'],
+    //         'cgpa'                => ['required', 'numeric'],
+    //         'subject_expertise'   => ['required', 'array'],
+    //         'subject_expertise.*' => ['exists:subjects,id'],
+    //         'tutor_style_description'         => ['required', 'string', 'min:20'],
+    //         'profile_photo'       => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+    //         'tutor_cert' => ['required', 'string'],
+    //         'resume'     => ['required', 'string'],
+    //     ]);
+
+    //     // 1. Create User (Status is Pending)
+    //     $user = User::create([
+    //         'name'       => $request->name,
+    //         'email'      => $request->email,
+    //         'password'   => Hash::make($request->password),
+    //         'role'       => 'tutor',
+    //         'status'     => 'pending',
+    //     ]);
+
+    //     $user->addRole('tutor');
+
+    //     $photoPath = null;
+    //     if ($request->hasFile('profile_photo')) {
+    //         // This saves it to storage/app/public/photos
+    //         $photoPath = $request->file('profile_photo')->store('photos', 'public');
+    //     }
+    //     // $certPath  = $request->file('tutor_cert')->store('certificates', 'public');
+    //     // $resumePath = $request->file('resume')->store('resumes', 'public');
+
+    //    $fileFields =
+    //    [
+    //     'resume'=>'resumes',
+    //     'tutor_cert' => 'certificates'
+    //    ];
+
+    //    $finalPaths = [];
+    //     foreach ($fileFields as $field => $folder) {
+    //         $tmpPath = $request->input($field);
+    //         if ($tmpPath) {
+    //             $filename = basename($tmpPath);
+    //             $newPath = "$folder/$filename";
+
+    //             if (Storage::disk('public')->exists($tmpPath)) {
+    //                 Storage::disk('public')->move($tmpPath, $newPath);
+    //                 $finalPaths[$field] = $newPath;
+    //             }
+    //         }
+    //     }
+
+    //     $aiData = [
+    //         'university' => 'Not Extracted',
+    //         'course'     => 'Not Extracted',
+    //         'ai_summary' => 'No Summary Generated',
+    //         'experience_titles' => [],
+    //         'suggested_subjects' => []
+    //     ];
+
+    //     if (isset($finalPaths['resume'])) {
+    //         $fullResumePath = storage_path("app/public/" . $finalPaths['resume']);
+
+    //         try {
+    //             // Connecting to your Python AI Engine
+    //             $response = Http::timeout(15)->post('http://127.0.0.1:5001/extract', [
+    //                 'path' => $fullResumePath
+    //             ]);
+
+    //             if ($response->successful()) {
+    //                 $extracted = $response->json();
+    //                 $aiData['university']         = $extracted['university'];
+    //                 $aiData['course']             = $extracted['course'];
+    //                 $aiData['ai_summary']         = $extracted['summary'];
+    //                 $aiData['experience_titles']   = $extracted['experience_titles'];
+    //                 $aiData['suggested_subjects']  = $extracted['suggested_subjects'];
+    //             }
+    //         } catch (\Exception $e) {
+    //             // Log error if AI server is down
+    //             Log::error("AI Server Error: " . $e->getMessage());
+    //         }
+    //     }
+
+    //     $finalScore = $this->calculateQualificationScore($request, $finalPaths);
+    //     $ranking = 'Standard';
+    //     if ($finalScore >= 80) $ranking = 'Highly Recommended';
+    //     elseif ($finalScore >= 60) $ranking = 'Recommended';
+    //     if ($request->has('subject_expertise')) {
+    //     $user->subjects()->attach($request->subject_expertise);
+    //     }
+
+    //     // 4. Create Tutor Profile
+    //     TutorProfile::create([
+    //         'user_id'                 => $user->id,
+    //         'profile_photo'           => $photoPath,
+    //         'address'                 => $request->address,
+    //         'age'                     => $request->age,
+    //         'experience'              => $request->experience,
+    //         'education_level_id'      => $request ->education_level_id,
+    //         'cgpa'                    => $request ->cgpa,
+    //         'tutor_cert'              => $finalPaths['tutor_cert'] ?? null,
+    //         'resume'                  => $finalPaths['resume'] ?? null,
+    //         'tutor_style_description' => $request->tutor_style_description,
+    //         'qualification_score'     => $finalScore,
+    //         'recommendation_status'   => $ranking,
+    //         'university'              => $aiData['university'],
+    //         'course'                  => $aiData['course'],
+    //         'ai_summary'              => $aiData['ai_summary'],
+    //         // 'experience_titles'       => $aiData['experience_titles'],
+    //         // 'suggested_subjects'      => $aiData['suggested_subjects'],
+    //         'experience_titles'       => json_encode($aiData['experience_titles']),
+    //         'suggested_subjects'      => json_encode($aiData['suggested_subjects']),
+
+    //     ]);
+    //     // -------------------------
+
+
+    //     return redirect()->route('login')->with('status', 'Application submitted! Admin will review your qualification score soon.');
+    // }
+
     public function store(Request $request)
-    {
-    //    dd($request->all());
-        $request->validate([
-            'name'                => ['required', 'string', 'max:255'],
-            'email'               => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password'            => Hash::make(\Illuminate\Support\Str::random(16)),
-            'age'                 => ['required', 'numeric'],
-            'address'             => ['required', 'string'],
-            'experience'          => ['required', 'numeric'],
-            'education_level_id'  => ['required','exists:education_level,id'],
-            'cgpa'                => ['required', 'numeric'],
-            'subject_expertise'   => ['required', 'array'],
-            'subject_expertise.*' => ['exists:subjects,id'],
-            'tutor_style_description'         => ['required', 'string', 'min:20'],
-            'profile_photo'       => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'tutor_cert' => ['required', 'string'],
-            'resume'     => ['required', 'string'],
-        ]);
+{
+    $request->validate([
+        'name'                    => ['required', 'string', 'max:255'],
+        'email'                   => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password'                => ['nullable', 'string', 'min:8'],
+        'age'                     => ['required', 'numeric'],
+        'address'                 => ['required', 'string'],
+        'experience'              => ['required', 'numeric'],
+        'education_level_id'      => ['required', 'exists:education_level,id'],
+        'cgpa'                    => ['required', 'numeric'],
+        'subject_expertise'       => ['required', 'array'],
+        'subject_expertise.*'     => ['exists:subjects,id'],
+        'tutor_style_description' => ['required', 'string', 'min:20'],
+        'profile_photo'           => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+    ]);
 
-        // 1. Create User (Status is Pending)
-        $user = User::create([
-            'name'       => $request->name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'role'       => 'tutor',
-            'status'     => 'pending',
-        ]);
+    // 1. Create User
+    $user = User::create([
+        'name'     => $request->name,
+        'email'    => $request->email,
+        'password' => Hash::make($request->password),
+        'role'     => 'tutor',
+        'status'   => 'pending',
+    ]);
 
-        $user->addRole('tutor');
+    $user->addRole('tutor');
 
-        $photoPath = null;
-        if ($request->hasFile('profile_photo')) {
-            // This saves it to storage/app/public/photos
-            $photoPath = $request->file('profile_photo')->store('photos', 'public');
-        }
-        // $certPath  = $request->file('tutor_cert')->store('certificates', 'public');
-        // $resumePath = $request->file('resume')->store('resumes', 'public');
+    // 2. Handle Profile Photo
+    $photoPath = null;
+    if ($request->hasFile('profile_photo')) {
+        $photoPath = $request->file('profile_photo')->store('photos', 'public');
+    }
 
-       $fileFields =
-       [
-        'resume'=>'resumes',
-        'tutor_cert' => 'certificates'
-       ];
+    // 3. Robust File Management Handler (Bypasses FilePond for Postman)
+    $finalPaths = [];
+    $fileFields = ['resume' => 'resumes', 'tutor_cert' => 'certificates'];
 
-       $finalPaths = [];
-        foreach ($fileFields as $field => $folder) {
+    foreach ($fileFields as $field => $folder) {
+        if ($request->hasFile($field)) {
+            // Postman Direct Upload Track
+            $finalPaths[$field] = $request->file($field)->store($folder, 'public');
+        } else {
+            // Browser FilePond String Input Track
             $tmpPath = $request->input($field);
             if ($tmpPath) {
                 $filename = basename($tmpPath);
                 $newPath = "$folder/$filename";
-
                 if (Storage::disk('public')->exists($tmpPath)) {
                     Storage::disk('public')->move($tmpPath, $newPath);
                     $finalPaths[$field] = $newPath;
                 }
             }
         }
-
-        $aiData = [
-            'university' => 'Not Extracted',
-            'course'     => 'Not Extracted',
-            'ai_summary' => 'No Summary Generated',
-            'experience_titles' => [],
-            'suggested_subjects' => []
-        ];
-
-        if (isset($finalPaths['resume'])) {
-            $fullResumePath = storage_path("app/public/" . $finalPaths['resume']);
-
-            try {
-                // Connecting to your Python AI Engine
-                $response = Http::timeout(15)->post('http://127.0.0.1:5000/extract', [
-                    'path' => $fullResumePath
-                ]);
-
-                if ($response->successful()) {
-                    $extracted = $response->json();
-                    $aiData['university']         = $extracted['university'];
-                    $aiData['course']             = $extracted['course'];
-                    $aiData['ai_summary']         = $extracted['summary'];
-                    $aiData['experience_titles']   = $extracted['experience_titles'];
-                    $aiData['suggested_subjects']  = $extracted['suggested_subjects'];
-                }
-            } catch (\Exception $e) {
-                // Log error if AI server is down
-                Log::error("AI Server Error: " . $e->getMessage());
-            }
-        }
-
-        $finalScore = $this->calculateQualificationScore($request, $finalPaths);
-        $ranking = 'Standard';
-        if ($finalScore >= 80) $ranking = 'Highly Recommended';
-        elseif ($finalScore >= 60) $ranking = 'Recommended';
-        if ($request->has('subject_expertise')) {
-        $user->subjects()->attach($request->subject_expertise);
-        }
-
-        // 4. Create Tutor Profile
-        TutorProfile::create([
-            'user_id'                 => $user->id,
-            'profile_photo'           => $photoPath,
-            'address'                 => $request->address,
-            'age'                     => $request->age,
-            'experience'              => $request->experience,
-            'education_level_id'      => $request ->education_level_id,
-            'cgpa'                    => $request ->cgpa,
-            'tutor_cert'              => $finalPaths['tutor_cert'] ?? null,
-            'resume'                  => $finalPaths['resume'] ?? null,
-            'tutor_style_description' => $request->tutor_style_description,
-            'qualification_score'     => $finalScore,
-            'recommendation_status'   => $ranking,
-            'university'              => $aiData['university'],
-            'course'                  => $aiData['course'],
-            'ai_summary'              => $aiData['ai_summary'],
-            'experience_titles'       => $aiData['experience_titles'],
-            'suggested_subjects'      => $aiData['suggested_subjects'],
-
-        ]);
-        // -------------------------
-
-
-        return redirect()->route('login')->with('status', 'Application submitted! Admin will review your qualification score soon.');
     }
+
+    // 4. Initialize AI Payload Placeholders
+    $aiData = [
+        'university'         => 'Not Extracted',
+        'course'             => 'Not Extracted',
+        'ai_summary'         => 'No Summary Generated',
+        'experience_titles'  => [],
+        'suggested_subjects' => []
+    ];
+
+    // 5. Port 5001 AI Server Bridge
+    if (isset($finalPaths['resume'])) {
+        $fullResumePath = storage_path("app/public/" . $finalPaths['resume']);
+
+        try {
+            $response = Http::timeout(15)->post('http://127.0.0.1:5001/extract', [
+                'path' => $fullResumePath
+            ]);
+
+            if ($response->successful()) {
+                $extracted = $response->json();
+                $aiData['university']         = $extracted['university'] ?? 'Not Extracted';
+                $aiData['course']             = $extracted['course'] ?? 'Not Extracted';
+                $aiData['ai_summary']         = $extracted['summary'] ?? 'No Summary Generated';
+                $aiData['experience_titles']   = $extracted['experience_titles'] ?? [];
+                $aiData['suggested_subjects']  = $extracted['suggested_subjects'] ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error("AI Server Handshake Failed: " . $e->getMessage());
+        }
+    }
+
+    // 6. Calculate Expert System Scores
+    $finalScore = $this->calculateQualificationScore($request, $finalPaths);
+    $ranking = 'Standard';
+    if ($finalScore >= 80) $ranking = 'Highly Recommended';
+    elseif ($finalScore >= 60) $ranking = 'Recommended';
+
+    if ($request->has('subject_expertise')) {
+        $user->subjects()->attach($request->subject_expertise);
+    }
+
+    // 7. Write Structured Profile Row to Database
+    TutorProfile::create([
+        'user_id'                 => $user->id,
+        'profile_photo'           => $photoPath,
+        'address'                 => $request->address,
+        'age'                     => $request->age,
+        'experience'              => $request->experience,
+        'education_level_id'      => $request->education_level_id,
+        'cgpa'                    => $request->cgpa,
+        'tutor_cert'              => $finalPaths['tutor_cert'] ?? null,
+        'resume'                  => $finalPaths['resume'] ?? null,
+        'tutor_style_description' => $request->tutor_style_description,
+        'qualification_score'     => $finalScore,
+        'recommendation_status'   => $ranking,
+        'university'              => $aiData['university'],
+        'course'                  => $aiData['course'],
+        'ai_summary'              => $aiData['ai_summary'],
+
+        // Safety Serialization: Converts array responses into clean JSON strings
+        'experience_titles'       => json_encode($aiData['experience_titles']),
+        'suggested_subjects'      => json_encode($aiData['suggested_subjects']),
+    ]);
+
+    return redirect()->route('login')->with('status', 'Application submitted successfully!');
+}
 
     private function calculateQualificationScore(Request $request, array $finalPaths)
     {

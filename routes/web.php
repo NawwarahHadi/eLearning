@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ChatController;
+// use App\Http\Controllers\ChatController as ControllersChatController;
 use App\Http\Controllers\ClassManagementController;
 use App\Http\Controllers\CourseAssessmentController;
 use App\Http\Controllers\DashboardController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\LearningManagementController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\SchedullingController;
 use App\Http\Controllers\StudentClassController;
 use Illuminate\Support\Facades\Route;
 
@@ -145,6 +147,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ChatController::class, 'index'])->name('index');
         Route::get('/{receiver_id}', [ChatController::class, 'show'])->name('show');
         Route::post('/send', [ChatController::class, 'store'])->name('store');
+        Route::post('/reschedule/approve', [SchedullingController::class, 'approveReschedule'])->name('reschedule.approve');
+        Route::post('/reschedule/reject', [SchedullingController::class, 'rejectReschedule'])->name('reschedule.reject');
 
 
     });

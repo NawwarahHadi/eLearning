@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat.{id}', function ($user, $id) {
-    // This ensures only the intended receiver can hear the real-time notification
-    return (int) $user->id === (int) $id;
+Broadcast::channel('chat.{userId}', function ($user, $userId) {
+    // Return true if the logged-in user is allowed to listen to this private stream
+    return (int) $user->id === (int) $userId;
 });
