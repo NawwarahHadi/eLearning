@@ -37,7 +37,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard/Admin', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard/Admin', [DashboardController::class, 'index'])->name('dashboard.admin');
 Route::get('/dashboard/tutor', [DashboardController::class, 'indexTutor'])->name('dashboard.tutor');
 Route::get('/dashboard/student', [DashboardController::class, 'indexStudent'])->name('dashboard.student');
 

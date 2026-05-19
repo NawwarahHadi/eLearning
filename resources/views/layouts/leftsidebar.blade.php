@@ -23,7 +23,7 @@
                      ========================================== --}}
                 @if(auth()->user()->role == 'admin' || auth()->user()->role == 'superadmin')
                 <div class="menu-item">
-                    <a class="menu-link" href="{{route ('dashboard')}}">
+                    <a class="menu-link" href="{{route ('dashboard.admin')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
                         </span>
