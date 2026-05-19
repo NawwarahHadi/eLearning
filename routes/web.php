@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/learning-material/download/{id}/{type}', [LearningManagementController::class, 'download'])->name('download');
         Route::post('/update/{id}', [LearningManagementController::class,'update'])->name('update');
         Route::get('/edit/{id}', [LearningManagementController::class,'edit'])->name('edit');
-        Route::get('/delete/{id}', [LearningManagementController::class,'destroy'])->name('destroy');
+        // Route::get('/delete/{id}', [LearningManagementController::class,'destroy'])->name('destroy');
         Route::get('/open-file/{id}/{nama}', [LearningManagementController::class, 'openFile'])->name('open-file');
         Route::get('/learning-material/delete-file/{id}/{type}', [LearningManagementController::class, 'deleteSingleFile'])->name('file-delete');
 
