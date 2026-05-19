@@ -44,7 +44,7 @@ class EnrollmentController extends Controller
         // 6. Call Python Flask API for Text Similarity Scores[cite: 1, 2]
         $textScores = [];
         try {
-            $response = Http::timeout(3)->post('http://127.0.0.1:5001/get-text-score', [
+            $response = Http::timeout(3)->post('http://127.0.0.1:5000/get-text-score', [
                 'student_style_description' => $student->studentProfile->student_style_description ?? '',
                 'tutor_style_description'   => $tutors->map(function($t) {
                     return $t->tutorProfile->tutor_style_description;
