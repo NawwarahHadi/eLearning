@@ -15,4 +15,12 @@ class Quiz extends Model {
         // The quiz belongs to a specific material
         return $this->belongsTo(LearningMaterial::class, 'learning_material_id');
     }
+
+
+
+    public function attempts() {
+        // A quiz can have many attempts from different students
+        return $this->hasMany(QuizAttempt::class);
+    }
+
 }

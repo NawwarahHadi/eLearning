@@ -115,6 +115,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/tutor/store', [QuizController::class, 'store'])->name('store');
         Route::get('/student/play/{quiz_id}', [QuizController::class, 'play'])->name('play');
         Route::post('/student/submit/{quiz_id}', [QuizController::class, 'submit'])->name('submit');
+        Route::get('map/{class_id}', [QuizController::class, 'showMap'])->name('map');
+        Route::get('/review/{quiz_id}', [QuizController::class, 'review'])->name('review');
     });
 
     ##Payment

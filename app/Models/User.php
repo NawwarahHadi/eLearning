@@ -35,6 +35,8 @@ class User extends Authenticatable implements LaratrustUser
         'role',
         'status',
         'rejected_at',
+        'xp',
+        'level',
     ];
 
     protected $hidden = [

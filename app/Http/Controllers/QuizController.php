@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CreateClass;
 use App\Models\LearningMaterial;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\QuizAttempt;
+use App\Models\User; // <--- Added this import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class QuizController extends Controller
 {
-    // --- TUTOR SIDE ---
+
     public function create(int $learning_material_id)
     {
-        // Find the material to get the class_id automatically
         $material = LearningMaterial::findOrFail($learning_material_id);
 
-        // Pass both IDs to the view
         return view('Quiz.tutor-create', [
             'material' => $material,
             'class_id' => $material->class_id
@@ -28,20 +28,18 @@ class QuizController extends Controller
     {
         $request->validate([
             'title' => 'required|string',
-            'learning_material_id' => 'required|exists:learning_materials,id', // Ensure material exists
+            'learning_material_id' => 'required|exists:learning_materials,id',
             'questions.*.text' => 'required',
             'questions.*.correct' => 'required',
         ]);
 
-        // 1. Create the Quiz and link it to the Material
         $quiz = Quiz::create([
             'class_id' => $request->class_id,
             'tutor_id' => Auth::id(),
-            'learning_material_id' => $request->learning_material_id, // New Column
+            'learning_material_id' => $request->learning_material_id,
             'title' => $request->title,
         ]);
 
-        // 2. Save Questions
         foreach ($request->questions as $q) {
             QuizQuestion::create([
                 'quiz_id' => $quiz->id,
@@ -57,46 +55,148 @@ class QuizController extends Controller
         return redirect()->back()->with('success', 'Quiz successfully linked to your notes!');
     }
 
-    public function play(int $quiz_id) {
+
+    public function play(int $quiz_id)
+    {
         $quiz = Quiz::with(['questions', 'learningMaterial'])->findOrFail($quiz_id);
         return view('Quiz.student-answer-quiz', compact('quiz'));
     }
 
-    public function submit(Request $request, int $quiz_id)
+    public function submit(Request $request, int $id)
     {
-        $quiz = Quiz::with('questions')->findOrFail($quiz_id);
-        $correct = 0;
-        $results = []; // To store which questions were right/wrong
+        $quiz = Quiz::with('questions')->findOrFail($id);
+        $totalQuestions = $quiz->questions->count();
+        $correctCount = 0;
+        $results = [];
+        $savedAnswers = []; // Array tracking question_id => selected_option ('a', 'b', etc.)
 
-        foreach ($quiz->questions as $q) {
-            $userAnswer = $request->input('q_'.$q->id);
-            $isCorrect = ($userAnswer === $q->correct_option);
+        // 2. Loop through questions to validate answers and calculate metrics
+        foreach ($quiz->questions as $question) {
+            $userAnswer = $request->input('q_' . $question->id); // Captures student input selection
+            $isCorrect = ($userAnswer === $question->correct_option);
 
             if ($isCorrect) {
-                $correct++;
+                $correctCount++;
             }
 
-            // Store details for the same-page display
-            $results[$q->id] = [
+            // Save the chosen key string mapped to the unique question ID
+            $savedAnswers[$question->id] = $userAnswer;
+
+            // Payload structure for the instant result page display cards
+            $results[$question->id] = [
                 'user_answer' => $userAnswer,
                 'is_correct' => $isCorrect,
-                'correct_option' => $q->correct_option
+                'correct_option' => $question->correct_option
             ];
         }
 
-        $total = $quiz->questions->count();
-        $score = round(($correct / $total) * 100);
+       // 1. Calculate score percentage (Keep this where it is)
+        $scorePercentage = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
+        $studentId = Auth::id();
 
+        // === CRITICAL FIX: Add this line right here to define the variable! ===
+        $jsonAnswersString = json_encode($savedAnswers);
 
-        QuizAttempt::create([
+    // 2. The Absolute Upsert Engine
+    $attempt = QuizAttempt::updateOrCreate(
+        [
             'quiz_id' => $quiz->id,
-            'student_id' => Auth::id(),
-            'score' => $score,
-            'total_questions' => $total,
-            'correct_answers' => $correct,
-        ]);
+            'student_id' => $studentId,
+        ],
+        [
+            'score' => $scorePercentage,
+            'selected_answers' => $jsonAnswersString, // This error message will now instantly disappear!
+            'total_questions' => $totalQuestions,
+            'correct_answers' => $correctCount,
+        ]
+    );
 
-        // STAY ON PAGE: Return the view with the score and results
-        return view('Quiz.student-answer-quiz', compact('quiz', 'score', 'correct', 'total', 'results'));
+        $attempt = QuizAttempt::updateOrCreate(
+            [
+                'quiz_id' => $quiz->id,
+                'student_id' => $studentId,
+            ],
+            [
+                'score' => $scorePercentage,
+                'selected_answers' => $jsonAnswersString,
+                'total_questions' => $totalQuestions,
+                'correct_answers' => $correctCount,
+            ]
+        );
+
+
+        $user = Auth::user();
+        $leveledUp = false;
+        $xpEarned = 0;
+
+        if ($user instanceof User) {
+            // Base reward computation: 100 XP per accurate response point
+            $xpEarned = ($correctCount * 100);
+
+            // Mastery unlock milestone bonus multiplier (score >= 80%)
+            if ($scorePercentage >= 80) {
+                $xpEarned += 200;
+            }
+
+            // Apply earned rewards to user stats container profiles
+            $user->xp += $xpEarned;
+            $oldLevel = $user->level;
+
+            // Progression tier math calculation step mapping function
+            $user->level = floor($user->xp / 1000) + 1;
+            $user->save();
+
+            $leveledUp = ($user->level > $oldLevel);
+        }
+
+        // 5. Render output view card layout with loaded payload variables
+        return view('Quiz.student-answer-quiz', [
+            'quiz' => $quiz,
+            'score' => $scorePercentage,
+            'correct' => $correctCount,
+            'total' => $totalQuestions,
+            'results' => $results,
+            'xpEarned' => $xpEarned,
+            'leveledUp' => $leveledUp
+        ]);
+    }
+
+
+    public function showMap( int $class_id)
+    {
+
+        $materials = LearningMaterial::where('class_id', $class_id)
+            ->with(['quiz.attempts' => function($query) {
+                $query->where('student_id', auth::id());
+            }])
+            ->orderBy('created_at', 'asc') // This sets the path order
+            ->get();
+
+        // Find the class details for the map title
+        $class = CreateClass::findOrFail($class_id);
+
+        return view('Quiz.student-map', compact('materials', 'class'));
+    }
+
+    public function review(int $quiz_id)
+    {
+        $quiz = Quiz::with('questions')->findOrFail($quiz_id);
+
+        $latestAttempt = QuizAttempt::where('quiz_id', $quiz_id)
+            ->where('student_id', auth::id())
+            ->latest()
+            ->first();
+
+        if (!$latestAttempt) {
+            return redirect()->route('quiz.play', $quiz_id);
+        }
+
+        // CRITICAL ENGINE SAFEGUARD: Decode JSON safely if it's stored as a raw text string
+        $selectedAnswers = $latestAttempt->selected_answers;
+        if (is_string($selectedAnswers)) {
+            $selectedAnswers = json_decode($selectedAnswers, true);
+        }
+
+        return view('Quiz.student-review-quiz', compact('quiz', 'latestAttempt', 'selectedAnswers'));
     }
 }

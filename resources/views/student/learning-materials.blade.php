@@ -143,7 +143,7 @@
                             <td>
                                 @if($item->quiz)
                                     {{-- Only shows if the tutor has created a quiz for this specific material --}}
-                                    <a href="{{ route('quiz.play', $item->quiz->id) }}"
+                                    <a href="{{ route('quiz.map', $item->class_id) }}"
                                     class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1"
                                     data-bs-toggle="tooltip"
                                     title="Start Quiz">
