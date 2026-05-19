@@ -56,13 +56,13 @@ Route::middleware('auth')->group(function () {
     });
 
     ##Approval Enrollment
-    Route::prefix('enrollment')->name('enrollment.')->group(function(){
-        Route::get('/admin/enrollments', [ApplicationController::class, 'indexEnrollment'])->name('admin.index');
-        Route::post('/admin/enrollments/approve/{id}', [ApplicationController::class, 'approveEnrollment'])->name('admin.approve');
-        Route::post('/admin/enrollments/reject/{id}', [ApplicationController::class, 'rejectEnrollment'])->name('admin.reject');
-        Route::post('/admin/enrollments/approve-change/{id}', [EnrollmentController::class, 'approveChange'])->name('admin.approveChange');
-        Route::get('/admin/tutor-changes', [ApplicationController::class, 'indexTutorChanges'])->name('admin.tutorChanges');
-    });
+    // Route::prefix('enrollment')->name('enrollment.')->group(function(){
+    //     Route::get('/admin/enrollments', [ApplicationController::class, 'indexEnrollment'])->name('admin.index');
+    //     Route::post('/admin/enrollments/approve/{id}', [ApplicationController::class, 'approveEnrollment'])->name('admin.approve');
+    //     Route::post('/admin/enrollments/reject/{id}', [ApplicationController::class, 'rejectEnrollment'])->name('admin.reject');
+    //     Route::post('/admin/enrollments/approve-change/{id}', [EnrollmentController::class, 'approveChange'])->name('admin.approveChange');
+    //     Route::get('/admin/tutor-changes', [ApplicationController::class, 'indexTutorChanges'])->name('admin.tutorChanges');
+    // });
 
     ##Class Management
     Route::prefix('class')->name('class.')->group(function(){
