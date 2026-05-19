@@ -17,6 +17,18 @@ use App\Http\Controllers\SchedullingController;
 use App\Http\Controllers\StudentClassController;
 use Illuminate\Support\Facades\Route;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+
+Route::get('/import-sql', function () {
+    $path = base_path('database/eLearning2.sql'); // Path to your file
+    $sql = File::get($path);
+
+    // This runs the entire SQL file
+    DB::unprepared($sql);
+
+    return "Database imported successfully!";
+});
 Route::get('/', function () {
     return redirect()->route('login');
 });
