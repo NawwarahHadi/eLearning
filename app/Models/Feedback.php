@@ -13,6 +13,7 @@ class Feedback extends Model
     protected $fillable = [
         'student_id',
         'tutor_id',
+        'class_id',
         'rating',
         'comment',
     ];

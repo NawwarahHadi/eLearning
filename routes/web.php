@@ -8,13 +8,16 @@ use App\Http\Controllers\ClassManagementController;
 use App\Http\Controllers\CourseAssessmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LearningManagementController;
+use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SchedullingController;
 use App\Http\Controllers\StudentClassController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
 use Illuminate\Support\Facades\DB;
@@ -33,6 +36,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/', [WelcomeController::class, 'index']);
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -56,13 +60,13 @@ Route::middleware('auth')->group(function () {
     });
 
     ##Approval Enrollment
-    // Route::prefix('enrollment')->name('enrollment.')->group(function(){
-    //     Route::get('/admin/enrollments', [ApplicationController::class, 'indexEnrollment'])->name('admin.index');
-    //     Route::post('/admin/enrollments/approve/{id}', [ApplicationController::class, 'approveEnrollment'])->name('admin.approve');
-    //     Route::post('/admin/enrollments/reject/{id}', [ApplicationController::class, 'rejectEnrollment'])->name('admin.reject');
-    //     Route::post('/admin/enrollments/approve-change/{id}', [EnrollmentController::class, 'approveChange'])->name('admin.approveChange');
-    //     Route::get('/admin/tutor-changes', [ApplicationController::class, 'indexTutorChanges'])->name('admin.tutorChanges');
-    // });
+    Route::prefix('enrollment')->name('enrollment.')->group(function(){
+        Route::get('/admin/enrollments', [ApplicationController::class, 'indexEnrollment'])->name('admin.index');
+        Route::post('/admin/enrollments/approve/{id}', [ApplicationController::class, 'approveEnrollment'])->name('admin.approve');
+        Route::post('/admin/enrollments/reject/{id}', [ApplicationController::class, 'rejectEnrollment'])->name('admin.reject');
+        Route::post('/admin/enrollments/approve-change/{id}', [EnrollmentController::class, 'approveChange'])->name('admin.approveChange');
+        Route::get('/admin/tutor-changes', [ApplicationController::class, 'indexTutorChanges'])->name('admin.tutorChanges');
+    });
 
     ##Class Management
     Route::prefix('class')->name('class.')->group(function(){
@@ -73,6 +77,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/edit/{id}', [ClassManagementController::class,'edit'])->name('edit');
         Route::get('/delete/{id}', [ClassManagementController::class,'destroy'])->name('destroy');
         Route::get('/show/{id}', [ClassManagementController::class,'show'])->name('show');
+    });
+
+    ##Evaluation
+    Route::prefix('evaluation')->name('evaluation.')->group(function(){
+        Route::get('/{class_id}/{student_id}', [EvaluationController::class, 'form'])->name('form');
+        Route::post('/{class_id}/{student_id}', [EvaluationController::class, 'store'])->name('store');
+        Route::get('/student', [EvaluationController::class, 'studentEvaluations'])->name('student');
     });
 
     ##Learning Management
@@ -163,8 +174,29 @@ Route::middleware('auth')->group(function () {
         Route::post('/send', [ChatController::class, 'store'])->name('store');
         Route::post('/reschedule/approve', [SchedullingController::class, 'approveReschedule'])->name('reschedule.approve');
         Route::post('/reschedule/reject', [SchedullingController::class, 'rejectReschedule'])->name('reschedule.reject');
+        Route::post('/mark-read/{sender_id}', [ChatController::class, 'markRead'])->name('markRead');
 
 
+    });
+
+    Route::prefix('user-management')->name('user-management.')->group(function () {
+        Route::get('/index', [ManageUserController::class,'index'])->name('index');
+        Route::get('/index/evaluate', [ManageUserController::class,'indexEvaluate'])->name('indexEvaluate');
+        Route::get('/index/payment', [ManageUserController::class,'indexPayment'])->name('indexPayment');
+        Route::get('/tambah', [ManageUserController::class,'create'])->name('tambah');
+        Route::post('/simpan', [ManageUserController::class,'store'])->name('simpan');
+        Route::post('/update/{id}', [ManageUserController::class,'update'])->name('update');
+        Route::get('/kemaskini/{id}', [ManageUserController::class,'edit'])->name('kemaskini');
+        Route::get('/hapus/{id}', [ManageUserController::class,'destroy'])->name('hapus');
+        Route::get('/login/{id}', [ManageUserController::class, 'loginPengguna'])->name('login-pengguna');
+        Route::get('/set-kata-laluan/{id}', [ManageUserController::class,'setKataLaluan'])->name('set-kata-laluan');
+        Route::post('/peranan-pengguna/simpan/{id}', [ManageUserController::class,'perananPengguna'])->name('peranan-pengguna-simpan');
+
+        ##Roles
+        // Route::prefix('roles')->name('roles.')->group(function () {
+        //     Route::get('/index', [RolesController::class,'index'])->name('index');
+        //     Route::get('/lihat/{id}', [RolesController::class,'lihat'])->name('lihat');
+        // });
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

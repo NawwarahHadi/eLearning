@@ -25,54 +25,57 @@
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('dashboard.admin')}}">
                         <span class="menu-icon">
-                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
+                            {{-- <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i> --}}
+                            <i class="ki-duotone ki-shop fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
+                            </i>
                         </span>
-                        <span class="menu-title fw-semibold">All Enrollments</span>
+                        <span class="menu-title fw-semibold">Dashboard</span>
                     </a>
                 </div>
-                <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
-                    <span class="menu-link">
+                <div class="menu-item">
+                   <a class="menu-link" href="{{ route('application.indexTutor')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-address-book fs-2">
                                 <span class="path1"></span><span class="path2"></span><span class="path3"></span>
                             </i>
                         </span>
-                        <span class="menu-title">Application </span>
-                        <span class="menu-arrow"></span>
-                    </span>
-                    <div class="menu-sub menu-sub-accordion">
-                        <div class="menu-item">
-                            <a class="menu-link" href="{{ route('application.indexTutor')}}">
-                                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                                <span class="menu-title">Approve Tutors</span>
-                            </a>
-                        </div>
-                        {{-- <div class="menu-item">
-                            <a class="menu-link" href="{{ route('application.index')}}">
-                                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                                <span class="menu-title">Approve Students</span>
-                            </a>
-                        </div> --}}
-                    </div>
+                        <span class="menu-title fw-semibold">Tutor Application</span>
+                    </a>
                 </div>
                 <div class="menu-item">
+                    <a class="menu-link" href="{{route ('feedback.show-admin')}}">
+                        <span class="menu-icon">
+                            <i class="ki-duotone ki-like-folder fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </span>
+                        <span class="menu-title fw-semibold">Feedback</span>
+                    </a>
+                </div>
+                {{-- <div class="menu-item">
                     <a class="menu-link" href="{{route ('enrollment.admin.index')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
                         </span>
                         <span class="menu-title fw-semibold">All Enrollments</span>
                     </a>
-                </div>
+                </div> --}}
 
-                <div class="menu-item">
+                {{-- <div class="menu-item">
                     <a class="menu-link" href="{{route ('payment.index')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
                         </span>
                         <span class="menu-title fw-semibold">Payment</span>
                     </a>
-                </div>
-                <div class="menu-item">
+                </div> --}}
+                {{-- <div class="menu-item">
                     <a class="menu-link" href="{{route ('enrollment.admin.tutorChanges')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
@@ -80,6 +83,14 @@
                         <span class="menu-title fw-semibold">Request Change Tutor</span>
                     </a>
                 </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{{route ('user-management.index')}}">
+                        <span class="menu-icon">
+                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
+                        </span>
+                        <span class="menu-title fw-semibold">Request Change Tutor</span>
+                    </a>
+                </div> --}}
                 @endif
 
                 {{-- ==========================================
@@ -89,7 +100,13 @@
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('dashboard.tutor')}}">
                         <span class="menu-icon">
-                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
+                           <i class="ki-duotone ki-shop fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
+                            </i>
                         </span>
                         <span class="menu-title fw-semibold">Dashboard</span>
                     </a>
@@ -105,7 +122,10 @@
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('feedback.show-tutor')}}">
                         <span class="menu-icon">
-                            <i class="ki-duotone ki-briefcase fs-2"><span class="path1"></span><span class="path2"></span></i>
+                            <i class="ki-duotone ki-like-folder fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
                         </span>
                         <span class="menu-title fw-semibold">Feedback</span>
                     </a>
@@ -119,7 +139,13 @@
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('dashboard.student')}}">
                         <span class="menu-icon">
-                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
+                            <i class="ki-duotone ki-shop fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
+                            </i>
                         </span>
                         <span class="menu-title fw-semibold">Dashboard</span>
                     </a>
@@ -160,7 +186,7 @@
                      5. SYSTEM DEVELOPER TOOLS
                      ========================================== --}}
                 @if(auth()->user()->role == 'superadmin')
-                <div class="menu-item pt-5">
+                {{-- <div class="menu-item pt-5">
                     <div class="menu-content">
                         <span class="menu-heading fw-bold text-uppercase fs-7 text-danger">Developer Console</span>
                     </div>
@@ -176,7 +202,7 @@
                         <span class="menu-icon"><i class="ki-duotone ki-code fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i></span>
                         <span class="menu-title fw-semibold">Terminal</span>
                     </a>
-                </div>
+                </div> --}}
                 @endif
 
                 <div class="menu-item pt-5">
@@ -185,7 +211,7 @@
                     </div>
                 </div>
                 <div class="menu-item">
-                    <a class="menu-link" href="">
+                    <a class="menu-link" href="{{route('profile.edit')}}">
                         <span class="menu-icon"><i class="ki-duotone ki-profile-circle fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i></span>
                         <span class="menu-title fw-semibold">Profile</span>
                     </a>

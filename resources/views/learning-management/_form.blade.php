@@ -1,4 +1,5 @@
 <div class="card-body">
+
     <div class="row mb-5">
         <div class="col-md-6">
             <label class="fs-5 fw-semibold mb-2 required">Week</label>
@@ -11,22 +12,17 @@
             @error('class_date') <span class="text-danger">{{ $message }}</span> @enderror
         </div>
     </div>
+
     <div class="col-md-12 mb-5">
         <label class="fs-5 fw-semibold mb-2">Topic Title</label>
-        <input type="text" name="topic" class="form-control form-control-solid" placeholder="e.g., EA Concept">
+        <input type="text" name="topic" class="form-control form-control-solid" placeholder="e.g., EA Concept" value="{{ old('topic') }}">
     </div>
-    <div class="row mb-8">
-        <label class="fs-5 fw-semibold mb-2">Online Meeting Details</label>
-        <div class="col-md-4">
-            <input type="text" name="webex_link" class="form-control form-control-solid" placeholder="Meeting Link URL">
-        </div>
-        <div class="col-md-4">
-            <input type="text" name="webex_meeting_code" class="form-control form-control-solid" placeholder="Meeting Code">
-        </div>
-        <div class="col-md-4">
-            <input type="text" name="webex_passcode" class="form-control form-control-solid" placeholder="Passcode">
-        </div>
-    </div>
+
+    {{-- Zoom auto-created — manual fields hidden
+    <div class="alert alert-light-primary d-flex align-items-center mb-8">
+        <i class="ki-duotone ki-information fs-2x text-primary me-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+        <span>A Zoom meeting link will be generated automatically for the selected session.</span>
+    </div> --}}
 
     <div class="row mb-8">
         <div class="col-12">
@@ -43,11 +39,4 @@
             @error('exercise') <span class="text-danger">{{ $message }}</span> @enderror
         </div>
     </div>
-
-
 </div>
-
-    {{-- <div class="card-footer d-flex justify-content-end py-6 px-9">
-        <button type="reset" class="btn btn-light btn-active-light-primary me-2">Discard</button>
-        <button type="submit" class="btn btn-primary" style="background-color: #388E3C;">Create Class</button>
-    </div> --}}

@@ -10,13 +10,24 @@ use Illuminate\Support\Facades\Http;
 
 class LearningManagementController extends Controller
 {
+    // public function index(int $class_id)
+    // {
+    //     $listMaterials = LearningMaterial::where('class_id', $class_id)
+    //         ->orderBy('week', 'asc')
+    //         ->get();
+
+    //     return view('learning-management.index', compact('listMaterials', 'class_id'));
+    // }
+
     public function index(int $class_id)
     {
-        $listMaterials = LearningMaterial::where('class_id', $class_id)
-            ->orderBy('week', 'asc')
-            ->get();
+        $materialsByWeek = LearningMaterial::where('class_id', $class_id)
+            ->with('schedule')
+            ->orderBy('class_date')
+            ->get()
+            ->groupBy('week');
 
-        return view('learning-management.index', compact('listMaterials', 'class_id'));
+        return view('learning-management.index', compact('materialsByWeek', 'class_id'));
     }
 
     public function create(int $class_id)
@@ -38,40 +49,40 @@ class LearningManagementController extends Controller
             'class_id'   => 'required',
             'week'       => 'required|string',
             'class_date' => 'required|date',
-            'webex_link' => 'nullable|string', // Jangan guna 'url' di sini jika anda mahu cuci manual
+            // 'webex_link' => 'nullable|string',
         ]);
 
         $data = $request->all();
         if (!$request->webex_link) {
-        $responseToken = Http::asForm()
-            ->withBasicAuth(config('services.zoom.client_id'), config('services.zoom.client_secret'))
-            ->post("https://zoom.us/oauth/token?grant_type=account_credentials&account_id=" . config('services.zoom.account_id'));
+            $responseToken = Http::asForm()
+                ->withBasicAuth(config('services.zoom.client_id'), config('services.zoom.client_secret'))
+                ->post("https://zoom.us/oauth/token?grant_type=account_credentials&account_id=" . config('services.zoom.account_id'));
 
-        if ($responseToken->successful()) {
-            $token = $responseToken->json()['access_token'];
+            if ($responseToken->successful()) {
+                $token = $responseToken->json()['access_token'];
 
-            // B. CIPTA MEETING BARU
-            $responseMeeting = Http::withToken($token)->post('https://api.zoom.us/v2/users/me/meetings', [
-                'topic' => "Class: " . $request->topic,
-                'type' => 2, // Scheduled meeting
-                'start_time' => $request->class_date . 'T20:00:00', // Contoh 8 Malam
-                'duration' => 120, // 2 jam
-                'settings' => [
-                    'host_video' => true,
-                    'participant_video' => true,
-                    'join_before_host' => false,
-                    'mute_upon_entry' => true,
-                ]
-            ]);
+                // B. CIPTA MEETING BARU
+                $responseMeeting = Http::withToken($token)->post('https://api.zoom.us/v2/users/me/meetings', [
+                    'topic' => "Class: " . $request->topic,
+                    'type' => 2, // Scheduled meeting
+                    'start_time' => $request->class_date . 'T20:00:00', // Contoh 8 Malam
+                    'duration' => 120, // 2 jam
+                    'settings' => [
+                        'host_video' => true,
+                        'participant_video' => true,
+                        'join_before_host' => false,
+                        'mute_upon_entry' => true,
+                    ]
+                ]);
 
-            if ($responseMeeting->successful()) {
-                $meeting = $responseMeeting->json();
-                $data['webex_link'] = $meeting['join_url']; // Link Zoom
-                $data['webex_meeting_code'] = $meeting['id'];
-                $data['webex_passcode'] = $meeting['password'];
+                if ($responseMeeting->successful()) {
+                    $meeting = $responseMeeting->json();
+                    $data['webex_link'] = $meeting['join_url']; // Link Zoom
+                    $data['webex_meeting_code'] = $meeting['id'];
+                    $data['webex_passcode'] = $meeting['password'];
+                }
             }
         }
-    }
 
         $folderPath = "materials/class_" . $request->class_id;
 
@@ -110,6 +121,7 @@ class LearningManagementController extends Controller
         return redirect()->route('learning-material.index', $request->class_id)
                          ->with('success', 'Materials successfully saved and moved from temporary storage!');
     }
+
 
     /**
      * Fungsi Upload Asynchronous untuk FilePond (Simpan di folder tmp)
@@ -197,7 +209,7 @@ class LearningManagementController extends Controller
         return view('learning-management.edit', compact('learningMaterial', 'class_id'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         $material = LearningMaterial::findOrFail($id);
 

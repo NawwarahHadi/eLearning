@@ -10,6 +10,7 @@ class StudentProfile extends Model
         'user_id',
         'age',
         'category', // e.g., Form 1, Form 2
+        'profile_photo', // e.g., Form 1, Form 2
         'address',
         'exam_result',
         'student_style_description', // For AI Matching

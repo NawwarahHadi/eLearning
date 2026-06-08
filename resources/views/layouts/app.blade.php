@@ -49,12 +49,12 @@ Website: https://www.ppst.kelantan.gov.my
                                     <text x="52" y="37"
                                         font-family="Inter, -apple-system, sans-serif"
                                         font-size="22" font-weight="800" fill="#ffffff"
-                                        letter-spacing="-0.02em">E<tspan fill="#34d399">-</tspan>Learning</text>
+                                        letter-spacing="-0.02em">Tuition Center<tspan fill="#34d399">
 
-                                    <text x="52" y="52"
+                                    {{-- <text x="52" y="52"
                                         font-family="Inter, sans-serif"
                                         font-size="9" font-weight="500" fill="#94a3b8"
-                                        letter-spacing="0.05em" text-transform="uppercase">Management System</text>
+                                        letter-spacing="0.05em" text-transform="uppercase">Management System</text> --}}
 
                                     <defs>
                                         <linearGradient id="emeraldGrad" x1="0" y1="8" x2="44" y2="52" gradientUnits="userSpaceOnUse">
@@ -118,11 +118,11 @@ Website: https://www.ppst.kelantan.gov.my
                                                             $unreadCount = \App\Models\Message::where('receiver_id', Auth::id())->where('is_read', false)->count();
                                                         @endphp
 
-                                                        @if($unreadCount > 0)
-                                                            <span class="badge badge-circle badge-danger position-absolute top-0 start-100 translate-middle h-20px w-20px fs-9">
-                                                                {{ $unreadCount }}
-                                                            </span>
-                                                        @endif
+                                                        <span id="navbar-unread-badge"
+                                                            class="badge badge-circle badge-danger position-absolute top-0 start-100 translate-middle h-20px w-20px fs-9"
+                                                            style="{{ $unreadCount > 0 ? '' : 'display:none;' }}">
+                                                            {{ $unreadCount > 0 ? $unreadCount : '' }}
+                                                        </span>
                                                     </a>
                                                 </div>
                                             </div>
@@ -225,5 +225,33 @@ Website: https://www.ppst.kelantan.gov.my
 		<script src="https://unpkg.com/sweetalert2@11.9.0/dist/sweetalert2.all.js"></script>
         @include('sweetalert::alert')
         @vite(['resources/js/app.js'])
+        @auth
+            <script>
+                (function waitForEcho() {
+                    if (typeof window.Echo === 'undefined') {
+                        return setTimeout(waitForEcho, 200);
+                    }
+
+                    const myId = {{ Auth::id() }};
+                    const badge = document.getElementById('navbar-unread-badge');
+
+                    // which conversation is open right now? (set by messenger page)
+                    function openChatWith() {
+                        return window.currentOpenChatId || null;
+                    }
+
+                    window.Echo.private(`chat.${myId}`)
+                        .listen('.MessageSent', (e) => {
+                            // if I'm currently viewing this sender's chat, don't count it
+                            if (openChatWith() && parseInt(e.message.sender_id) === parseInt(openChatWith())) {
+                                return;
+                            }
+                            let current = parseInt(badge.textContent) || 0;
+                            badge.textContent = current + 1;
+                            badge.style.display = '';
+                        });
+                })();
+            </script>
+        @endauth
 	</body>
 </html>

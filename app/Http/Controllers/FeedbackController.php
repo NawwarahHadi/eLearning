@@ -32,36 +32,39 @@ class FeedbackController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-     public function store(Request $request)
+    public function store(Request $request)
     {
+        // 1. Validate the incoming request data
         $request->validate([
             'tutor_id' => 'required|exists:users,id',
+            'class_id' => 'required|exists:class,id', // <-- Ensure class table name matches yours
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'required|string|max:1000',
         ]);
 
+        // 2. Create the feedback with the class_id included
         Feedback::create([
-            // 'student_id' =>Auth::classid(),
-            'student_id' => $request->student_id,
+            'student_id' => Auth::id(),
             'tutor_id' => $request->tutor_id,
+            'class_id' => $request->class_id, // <-- Add this line
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);
 
         return redirect()->back()->with('success', 'Feedback submitted successfully.');
-    }
+}
 
 
     public function showAdmin()
     {
-        // Fetches everything for Admin
-        $feedbacks = Feedback::with(['student', 'class'])->latest()->get();
-        return view('feedback.index', compact('feedbacks'));
+        // Fetches everything for Admin with eager loading to prevent N+1 issues
+        $feedbacks = Feedback::with(['student', 'class.tutor'])->latest()->get();
+
+        return view('feedback.admin', compact('feedbacks'));
     }
 
     public function showTutor()
     {
-        // Fetches only for the logged-in tutor
         $feedbacks = Feedback::where('tutor_id', Auth::id())
                     ->with(['student', 'class'])
                     ->latest()

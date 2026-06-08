@@ -21,7 +21,9 @@ class ClassManagementController extends Controller
     public function index()
     {
 
-        $listClass = CreateClass::with(['schedules', 'subject'])
+        $listClass = CreateClass::with(['schedules' => function ($q) {
+                $q->where('is_temporary', 0);   // only permanent schedules
+            }, 'subject'])
             ->where('tutor_id', Auth::id())
             ->get();
 
@@ -154,13 +156,14 @@ class ClassManagementController extends Controller
         ]);
 
         // 4. Refresh Schedules (Delete old and replace)
-        $class->schedules()->delete();
+        $class->schedules()->where('is_temporary', 0)->delete();
         foreach ($request->class_schedules as $schedule) {
             ClassSchedule::create([
-                'class_id'   => $class->id,
-                'day'        => $schedule['day'],
-                'start_time' => $schedule['start_time'],
-                'end_time'   => $schedule['end_time'],
+                'class_id'    => $class->id,
+                'day'         => $schedule['day'],
+                'start_time'  => $schedule['start_time'],
+                'end_time'    => $schedule['end_time'],
+                'is_temporary'=> 0,   // ← explicitly mark as permanent
             ]);
         }
 
@@ -172,7 +175,7 @@ class ClassManagementController extends Controller
     public function destroy(string $id)
     {
         $class = CreateClass::findOrFail($id);
-        $class->schedules()->delete(); // Clean up child records
+        $class->schedules()->where('is_temporary', 0)->delete();// Clean up child records
         $class->delete();
 
         return redirect()->route('class.index')->with('success', 'Class deleted successfully!');
@@ -182,7 +185,7 @@ class ClassManagementController extends Controller
      */
     public function show(string $id)
     {
-        $class = CreateClass::with(['subject', 'students'])->findOrFail($id);
+        $class = CreateClass::with(['subject', 'students', 'students.studentProfile'])->findOrFail($id);
 
         return view('class-management.show', compact('class'));
     }

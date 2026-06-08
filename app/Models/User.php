@@ -84,4 +84,23 @@ class User extends Authenticatable implements LaratrustUser
         return $this->hasMany(Enrollment::class, 'student_id');
     }
 
+    public function getAvatarUrlAttribute(): string
+    {
+        $photo = null;
+
+        if ($this->role === 'tutor' && $this->tutorProfile) {
+            $photo = $this->tutorProfile->profile_photo;
+        } elseif ($this->role === 'student' && $this->studentProfile) {
+            $photo = $this->studentProfile->profile_photo;
+        }
+
+        if ($photo) {
+            // storage/app/public path → public URL
+            return asset('storage/' . $photo);
+        }
+
+        // fallback: initials avatar
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=random';
+    }
+
 }

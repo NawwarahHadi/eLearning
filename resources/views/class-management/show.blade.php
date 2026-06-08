@@ -12,29 +12,7 @@
 @section('js_after')
     <script src="{{ asset('metronic/assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
     <script src="{{ asset('metronic/js/datatable.js') }}"></script>
-    {{-- <script src="{{ asset('metronic/js/button_loading.js') }}"></script> --}}
-    <script>
-        $(document).on('click', '.batal-button', function(e) {
-            e.preventDefault();
 
-            Swal.fire({
-                title: 'Peringatan!',
-                text: 'Klik Teruskan untuk tolak permohonan.',
-                icon: 'warning',
-                confirmButtonText: 'Teruskan',
-                showCancelButton: true,
-                cancelButtonText: 'Batal',
-                customClass: {
-                    confirmButton: "btn btn-primary",
-                    cancelButton: "btn btn-danger",
-                }
-            }).then((result) => {
-                if (result.value) {
-                    window.location.href = $(this).attr("href");
-                }
-            });
-        });
-    </script>
 @endsection
 
 
@@ -80,42 +58,52 @@
                             <th class="min-w-200px">Student Name</th>
                             <th class="min-w-150px">Contact Info</th>
                             <th class="min-w-150px">Enrollment Date</th>
-                            <th class="text-end">Status</th>
+                            <th class="text-end">Evaluation</th>
+                            {{-- <th class="text-end">Status</th> --}}
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($class->students as $student)
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="symbol symbol-45px me-5">
-                                        <span class="symbol-label bg-light-success text-success fw-bold">
-                                            {{ strtoupper(substr($student->name, 0, 1)) }}
-                                        </span>
+                        @foreach($class->students as $student)
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <img src="{{ $student->avatar_url }}" class="avatar" alt="{{ $student->name }}"
+                                            style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                                        <div>
+                                            <div class="fw-bold">{{ $student->name }}</div>
+                                            <div class="text-muted fs-7">{{ $student->email }}</div>
+                                        </div>
                                     </div>
-                                    <div class="d-flex justify-content-start flex-column">
-                                        <span class="text-dark fw-bold text-hover-primary fs-6">{{ $student->name }}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="text-muted fw-semibold d-block fs-7">{{ $student->email }}</span>
-                                <span class="text-muted fw-semibold d-block fs-7">{{ $student->phone ?? 'No Phone' }}</span>
-                            </td>
-                            <td>
-                                <span class="text-gray-600 fw-bold d-block fs-7">{{ $student->pivot->created_at->format('d M Y') }}</span>
-                            </td>
-                            <td class="text-end">
-                                <span class="badge badge-light-primary">Active Enrollment</span>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="text-center py-10">
-                                <div class="text-muted fs-4 fw-bold">No students have enrolled in this class yet.</div>
-                            </td>
-                        </tr>
-                        @endforelse
+                                    {{-- <div class="d-flex align-items-center">
+                                        <div class="symbol symbol-45px me-5">
+                                            <span class="symbol-label bg-light-success text-success fw-bold">
+                                                {{ strtoupper(substr($student->name, 0, 1)) }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-start flex-column">
+                                            <span class="text-dark fw-bold text-hover-primary fs-6">{{ $student->name }}</span>
+                                        </div>
+                                    </div> --}}
+                                </td>
+                                <td>
+                                    <span class="text-muted fw-semibold d-block fs-7">{{ $student->phone ?? 'No Phone' }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-gray-600 fw-bold d-block fs-7">{{ $student->pivot->created_at->format('d M Y') }}</span>
+                                </td>
+                                {{-- <td class="text-end">
+                                    <span class="badge badge-light-primary">Active Enrollment</span>
+                                </td> --}}
+                                <td class="text-end">
+                                    <a href="{{route('evaluation.form', [$class->id, $student->id])}}"class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" data-bs-toggle="tooltip" title="Evalution Form">
+                                        <i class="ki-duotone ki-message-edit text-warning fs-2x">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>

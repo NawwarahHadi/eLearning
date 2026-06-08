@@ -22,10 +22,21 @@ class MessageSent implements \Illuminate\Contracts\Broadcasting\ShouldBroadcastN
         $this->message = $message;
     }
 
+    // public function broadcastOn(): array
+    // {
+    //     return [
+    //         new PrivateChannel('chat.' . $this->message->receiver_id),
+    //     ];
+    // }
     public function broadcastOn(): array
     {
         return [
             new PrivateChannel('chat.' . $this->message->receiver_id),
         ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'MessageSent';
     }
 }

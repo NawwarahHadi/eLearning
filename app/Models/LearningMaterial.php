@@ -10,6 +10,7 @@ class LearningMaterial extends Model
 
     protected $fillable = [
         'class_id',
+        'schedule_id',
         'week',
         'topic',
         'class_date',
@@ -30,4 +31,10 @@ class LearningMaterial extends Model
         // One material can have one quiz
         return $this->hasOne(Quiz::class, 'learning_material_id');
     }
+
+    public function schedule()
+    {
+        return $this->belongsTo(ClassSchedule::class, 'schedule_id');
+    }
+
 }

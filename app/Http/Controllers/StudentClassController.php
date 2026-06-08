@@ -25,15 +25,18 @@ class StudentClassController extends Controller
     public function showMaterials(int $class_id)
     {
         $enrollment = Enrollment::where('student_id', Auth::id())
-        ->where('class_id', $class_id)
-        ->with('schedule') // Load the ClassSchedule model
-        ->first();
+            ->where('class_id', $class_id)
+            ->with('schedule')
+            ->first();
 
-        $materials = LearningMaterial::where('class_id', $class_id)
-            ->with('quiz')
-            ->get();
+        $materialsByWeek = LearningMaterial::where('class_id', $class_id)
+            ->with(['quiz', 'schedule'])
+            ->orderBy('class_date')
+            ->get()
+            ->groupBy('week')
+            ->sortBy(fn($items, $week) => (int) filter_var($week, FILTER_SANITIZE_NUMBER_INT), SORT_NUMERIC);
 
-        return view('student.learning-materials', compact('materials', 'class_id', 'enrollment'));
+        return view('student.learning-materials', compact('materialsByWeek', 'class_id', 'enrollment'));
     }
 
     public function download(int $id, string $type)

@@ -11,6 +11,60 @@
 @section('js_after')
     <script src="{{ asset('metronic/assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
     <script src="{{ asset('metronic/js/datatable.js') }}"></script>
+
+    <script>
+        // Populate modal when opened from any reschedule button
+        const rescheduleModal = document.getElementById('rescheduleModal');
+        if (rescheduleModal) {
+            rescheduleModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                document.getElementById('rs-tutor-id').value   = btn.getAttribute('data-tutor-id');
+                document.getElementById('rs-tutor-name').value = btn.getAttribute('data-tutor-name');
+                document.getElementById('rs-class-id').value   = btn.getAttribute('data-class-id');
+                document.getElementById('rs-class-name').value = btn.getAttribute('data-class-name');
+                document.getElementById('rs-time').value = '';
+                document.getElementById('rs-reason').value = '';
+                document.getElementById('rescheduleModalLabel').textContent =
+                    '📅 Reschedule with ' + btn.getAttribute('data-tutor-name');
+            });
+        }
+
+        function sendRescheduleAndRedirect() {
+            const tutorId   = document.getElementById('rs-tutor-id').value;
+            const classId   = document.getElementById('rs-class-id').value;
+            const className = document.getElementById('rs-class-name').value;
+            const time      = document.getElementById('rs-time').value;
+            const reason    = document.getElementById('rs-reason').value;
+
+            if (!time || !reason) {
+                alert("Please complete all fields.");
+                return;
+            }
+
+            const payload = "[RESCHEDULE_REQUEST]" + JSON.stringify({
+                class_id: classId,
+                class_name: className,
+                time: time.replace('T', ' '),
+                reason: reason
+            });
+
+            const submitBtn = document.getElementById('rs-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            axios.post('/chat/send', { receiver_id: tutorId, message: payload })
+                .then(() => {
+                    // redirect into the chat with this tutor
+                    window.location.href = `/chat/${tutorId}`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Could not send request.");
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send & Open Chat';
+                });
+        }
+    </script>
 @endsection
 
 @section('content')
@@ -36,7 +90,6 @@
                 <tbody class="text-gray-600 fw-semibold">
                     @foreach($enrolledClasses as $classId => $group)
                         @php
-                            // Get the first record of the group to extract common details like Tutor and Subject
                             $firstItem = $group->first();
                         @endphp
                         <tr>
@@ -52,14 +105,13 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="d-flex flex-column">
-                                        {{-- Use 'nama_penuh' as per your User model --}}
                                         <span class="text-gray-800 fw-bold fs-7">{{ $firstItem->tutor->name }}</span>
                                         <span class="text-muted fs-8">{{ $firstItem->tutor->email }}</span>
                                     </div>
                                 </div>
                             </td>
 
-                            {{-- SELECTED SCHEDULES (Picked by Student) --}}
+                            {{-- SELECTED SCHEDULES --}}
                             <td>
                                 @foreach($group as $enrollment)
                                     @if($enrollment->schedule)
@@ -84,11 +136,11 @@
 
                             {{-- ACTIONS --}}
                             <td>
-                                <a href="{{ route('enrollment.changeTutor', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Change Tutor">
+                                {{-- <a href="{{ route('enrollment.changeTutor', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Change Tutor">
                                     <i class="ki-duotone ki-update-file text-info fs-1">
                                         <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span>
                                     </i>
-                                </a>
+                                </a> --}}
 
                                 <a href="{{ route('student.class.materials', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Learning Material">
                                     <i class="ki-duotone ki-some-files text-success fs-1">
@@ -96,25 +148,26 @@
                                     </i>
                                 </a>
 
-                                <a href="{{ route ('feedback.index', $firstItem->class_id)}}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Rate">
+                                <a href="{{ route('feedback.index', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Rate">
                                     <i class="ki-duotone ki-dots-circle text-warning fs-1">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                        <span class="path3"></span>
-                                        <span class="path4"></span>
+                                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span>
                                     </i>
                                 </a>
 
-                                <a href="{{ route('chat.show', $firstItem->tutor_id) }}"
-                                    class="btn btn-icon btn-bg-light btn-active-color-success btn-sm"
-                                    data-bs-toggle="tooltip"
-                                    title="Chat with {{ $firstItem->tutor->name }}">
-                                        <i class="ki-duotone ki-message-text-2 fs-1">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                            <span class="path3"></span>
-                                        </i>
-                                </a>
+                                {{-- RESCHEDULE: open modal, send request, redirect to chat --}}
+                                <button type="button"
+                                        class="btn btn-icon btn-bg-light btn-active-color-success btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#rescheduleModal"
+                                        data-tutor-id="{{ $firstItem->tutor_id }}"
+                                        data-tutor-name="{{ $firstItem->tutor->name }}"
+                                        data-class-id="{{ $firstItem->class_id }}"
+                                        data-class-name="{{ $firstItem->class->subject->name }}"
+                                        title="Reschedule with {{ $firstItem->tutor->name }}">
+                                    <i class="ki-duotone ki-message-text-2 fs-1">
+                                        <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                                    </i>
+                                </button>
                             </td>
                         </tr>
                     @endforeach
@@ -123,4 +176,47 @@
         </div>
     </div>
 </div>
+
+{{-- Shared Reschedule Modal (single instance for the whole table) --}}
+<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold" id="rescheduleModalLabel">📅 Propose Reschedule Time</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="rs-tutor-id">
+                <input type="hidden" id="rs-tutor-name">
+                <input type="hidden" id="rs-class-id">
+                <input type="hidden" id="rs-class-name">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Proposed New Date & Time</label>
+                    <input type="datetime-local" class="form-control" id="rs-time" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Reason for Absence</label>
+                    <textarea class="form-control" id="rs-reason" rows="3" placeholder="State your conflict details..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-bold text-dark" id="rs-submit" onclick="sendRescheduleAndRedirect()">
+                    Send &amp; Open Chat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
+{{-- <a href="{{ route('chat.show', $firstItem->tutor_id) }}"
+        class="btn btn-icon btn-bg-light btn-active-color-success btn-sm"
+        data-bs-toggle="tooltip"
+        title="Chat with {{ $firstItem->tutor->name }}">
+            <i class="ki-duotone ki-message-text-2 fs-1">
+                <span class="path1"></span>
+                <span class="path2"></span>
+                <span class="path3"></span>
+            </i>
+    </a> --}}

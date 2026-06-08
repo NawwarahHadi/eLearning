@@ -1,219 +1,191 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
-
+@section('title', 'Student Dashboard')
 @section('page-header', 'Dashboard')
-
-@section('css_after')
-@endsection
 
 @section('js_after')
 <script>
-    // Subject Performance (Radar Chart for Students)
-    var subjectOptions = {
-        series: [{
-            name: 'Score %',
-            data: [85, 90, 78, 92, 88],
-        }],
-        chart: {
-            height: 350,
-            type: 'radar',
-            toolbar: { show: false }
-        },
-        dataLabels: { enabled: true },
-        plotOptions: {
-            radar: {
-                size: 140,
-                polygons: {
-                    strokeColors: '#e9e9e9',
-                    fill: { colors: ['#f8f8f8', '#fff'] }
+    function updateScheduleStatuses() {
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+        const clock = document.getElementById('live-clock');
+        if (clock) clock.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        document.querySelectorAll('tr[data-start]').forEach(row => {
+            const [sh, sm] = row.dataset.start.split(':').map(Number);
+            const [eh, em] = row.dataset.end.split(':').map(Number);
+            const startMins = sh * 60 + sm, endMins = eh * 60 + em;
+            const badge = row.querySelector('.status-badge');
+            const joinCell = row.querySelector('.join-cell');
+            const zoom = row.dataset.zoom;
+            if (!badge) return;
+
+            let status, cls;
+            if (nowMins < startMins)        { status = 'Upcoming';  cls = 'badge-light-warning'; }
+            else if (nowMins <= endMins)    { status = 'Ongoing';   cls = 'badge-light-primary'; }
+            else                            { status = 'Completed'; cls = 'badge-light-success'; }
+
+            badge.textContent = status;
+            badge.className = 'badge fw-bold status-badge ' + cls;
+
+            if (joinCell) {
+                if (status === 'Ongoing' && zoom) {
+                    joinCell.innerHTML = `<a href="${zoom}" target="_blank" class="btn btn-sm btn-success">Join Now</a>`;
+                } else if (status === 'Ongoing') {
+                    joinCell.innerHTML = `<span class="text-muted fs-8">No link yet</span>`;
+                } else {
+                    joinCell.innerHTML = `<span class="text-muted fs-8">—</span>`;
                 }
             }
-        },
-        colors: ['#009EF7'],
-        xaxis: {
-            categories: ['Math', 'Physics', 'Chemistry', 'Biology', 'English']
-        }
-    };
-
-    new ApexCharts(document.querySelector("#kt_student_subject_chart"), subjectOptions).render();
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        updateScheduleStatuses();
+        setInterval(updateScheduleStatuses, 30000);
+    });
 </script>
 @endsection
 
 @section('content')
-<div class="container-xxl py-10" id="kt_content_container">
+<div id="kt_content_container" class="container-xxl">
 
-    {{-- Row 1: Student Welcome & Quick Stats --}}
-    <div class="row g-5 g-xl-10 mb-10">
-        <div class="col-md-4">
-            <div class="card shadow-sm h-md-100 bg-light-primary border-0">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <h3 class="text-primary fw-bolder mb-2">Welcome Back, Siti!</h3>
-                    <p class="text-gray-600 fw-semibold">You have 2 classes scheduled for today. Stay focused!</p>
-                    <a href="#" class="btn btn-primary btn-sm w-fit mt-3">View My Schedule</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-8">
-            <div class="row g-5">
-                <div class="col-sm-4">
-                    <div class="card shadow-sm h-md-100 border-0">
-                        <div class="card-body text-center">
-                            <span class="fs-4 fw-semibold text-gray-400 d-block">Enrolled Classes</span>
-                            <span class="fs-2x fw-bold text-dark">{{ $stats['enrolled_classes'] }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="card shadow-sm h-md-100 border-0">
-                        <div class="card-body text-center">
-                            <span class="fs-4 fw-semibold text-gray-400 d-block">Attendance</span>
-                            <span class="fs-2x fw-bold text-success">{{ $stats['attendance_percentage'] }}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="card shadow-sm h-md-100 border-0">
-                        <div class="card-body text-center">
-                            <span class="fs-4 fw-semibold text-gray-400 d-block">GPA / CGPA</span>
-                            <span class="fs-2x fw-bold text-info">{{ $stats['current_gpa'] }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-   {{-- 🌟 Approved Makeup Classes Row Panel Section --}}
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="card card-flush shadow-sm">
-            <div class="card-header pt-5">
-                <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold text-warning">🔄 Approved Makeup & Rescheduled Sessions</span>
-                    <span class="text-muted mt-1 fw-semibold fs-7">Your dynamic private 1-to-1 makeup slots</span>
-                </h3>
-            </div>
-            <div class="card-body pt-0">
-                @if($approvedMakeups->isEmpty())
-                    <p class="text-muted mb-0 small">No upcoming temporary makeup classes scheduled at this time.</p>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4 mb-0">
-                            <thead>
-                                <tr class="fw-bolder text-muted fs-7 text-uppercase">
-                                    <th class="min-w-150px">Subject / Module</th>
-                                    <th class="min-w-125px">Instructor</th>
-                                    <th class="min-w-150px">📅 Makeup Date & Time</th>
-                                    <th class="min-w-150px">Reason</th>
-                                    <th class="min-w-120px text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($approvedMakeups as $makeup)
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <strong class="text-dark fs-6">
-                                                    {{ $makeup->classModule->subject->name ?? 'Course Module' }}
-                                                </strong>
-                                                <span class="text-muted fs-7">Code: {{ $makeup->classModule->class_code ?? 'N/A' }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-gray-800 fw-bold fs-6">
-                                            {{ $makeup->tutor->name ?? 'Assigned Tutor' }}
-                                        </td>
-                                        <td>
-                                            <span class="text-success fw-bolder fs-6">
-                                                {{ \Carbon\Carbon::parse($makeup->start_time)->format('d M Y, h:i A') }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted fs-7 text-italic text-truncate d-block" style="max-width: 200px;" title="{{ $makeup->reschedule_reason }}">
-                                                "{{ $makeup->reschedule_reason }}"
-                                            </span>
-                                        </td>
-                                        {{-- 🌟 AUTOMATED TIME-LOCK LINK ACTION BLOCK --}}
-                                        <td class="text-end">
-                                            @if($makeup->zoom_link)
-                                                @php
-                                                    $classDate = \Carbon\Carbon::parse($makeup->start_time)->startOfDay();
-                                                    $today = \Carbon\Carbon::now()->startOfDay();
-                                                    $isAvailable = $today->greaterThanOrEqualTo($classDate);
-                                                @endphp
-
-                                                @if($isAvailable)
-                                                    {{-- 🟢 Clickable button when class day arrives --}}
-                                                    <a href="{{ $makeup->zoom_link }}" target="_blank" class="btn btn-sm btn-success fw-bold text-uppercase px-4">
-                                                        Join Class
-                                                    </a>
-                                                @else
-                                                    {{-- ⚪ Greyed out button until the scheduled class day --}}
-                                                    <button type="button" class="btn btn-sm btn-secondary fw-bold text-uppercase px-4" disabled title="This link unlocks on {{ \Carbon\Carbon::parse($makeup->start_time)->format('d M Y') }}">
-                                                        Locked Until {{ \Carbon\Carbon::parse($makeup->start_time)->format('d M') }}
-                                                    </button>
-                                                @endif
-                                            @else
-                                                <span class="badge bg-light text-muted fs-7">Link Pending</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-    {{-- Row 3: Progress Chart & Assignments --}}
-    <div class="row g-5 g-xl-10 mb-10">
-        <div class="col-xl-8">
-            <div class="card card-flush shadow-sm h-md-100">
-                <div class="card-header pt-5">
-                    <h3 class="card-title align-items-start flex-column">
-                        <span class="card-label fw-bold text-dark">Subject Performance</span>
-                        <span class="text-muted mt-1 fw-semibold fs-7">Your quiz scores comparison</span>
-                    </h3>
-                </div>
+    {{-- Stat cards --}}
+    <div class="row g-5 g-xl-8 mb-5">
+        @php
+            $cards = [
+                ['label' => 'Enrolled Classes', 'value' => $stats['enrolled_classes'], 'color' => 'primary'],
+                ['label' => 'Quizzes Taken',    'value' => $stats['quizzes_taken'],    'color' => 'success'],
+                ['label' => 'Avg Quiz Score',   'value' => $stats['avg_quiz'].'%',     'color' => 'info'],
+                ['label' => 'Avg Evaluation',   'value' => $stats['avg_evaluation'].'/5', 'color' => 'warning'],
+            ];
+        @endphp
+        @foreach($cards as $c)
+        <div class="col-md-3">
+            <div class="card card-flush shadow-sm h-100">
                 <div class="card-body">
-                    <div id="kt_student_subject_chart" style="height: 350px;"></div>
+                    <div class="fs-2 fw-bold text-gray-900">{{ $c['value'] }}</div>
+                    <div class="fs-7 text-muted fw-semibold">{{ $c['label'] }}</div>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
+    {{-- Today's classes --}}
+    <div class="card shadow-sm mb-5">
+        <div class="card-header border-0 pt-5">
+            <h3 class="card-title fw-bold text-dark">Today's Classes
+                <span class="text-muted fw-semibold fs-7 ms-2">{{ now()->format('l, d M Y') }}</span>
+            </h3>
+            <div class="card-toolbar"><span class="badge badge-light fs-8" id="live-clock">--:--</span></div>
+        </div>
+        <div class="card-body py-3">
+            <div class="table-responsive">
+                <table class="table table-row-dashed align-middle gs-0 gy-4">
+                    <thead>
+                        <tr class="fw-bold text-muted">
+                            <th>Class</th><th>Time</th><th class="text-center">Status</th><th class="text-end">Join</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($todaySchedule as $s)
+                            <tr data-start="{{ \Carbon\Carbon::parse($s->schedule->start_time)->format('H:i') }}"
+                                data-end="{{ \Carbon\Carbon::parse($s->schedule->end_time)->format('H:i') }}"
+                                data-zoom="{{ $s->todayMaterial->webex_link ?? '' }}">
+                                <td class="fw-bold text-gray-800">{{ $s->classModule->subject->name ?? 'Class' }}</td>
+                                <td class="text-muted">
+                                    {{ \Carbon\Carbon::parse($s->schedule->start_time)->format('h:i A') }} -
+                                    {{ \Carbon\Carbon::parse($s->schedule->end_time)->format('h:i A') }}
+                                </td>
+                                <td class="text-center"><span class="badge fw-bold status-badge">—</span></td>
+                                <td class="text-end"><span class="join-cell"></span></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted py-6">No classes today</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        {{-- Approved makeups --}}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title fw-bold text-gray-900">Approved Makeup Sessions</h3>
+                </div>
+                <div class="card-body pt-3">
+                    @forelse($approvedMakeups as $m)
+                        <div class="border-bottom py-3">
+                            <div class="fw-bold text-gray-800">{{ $m->classModule->subject->name ?? 'Class' }}</div>
+                            <div class="fs-7 text-muted">
+                                {{ \Carbon\Carbon::parse($m->start_time)->format('d M Y, h:i A') }}
+                                @if($m->tutor) &middot; {{ $m->tutor->name }} @endif
+                            </div>
+                            @if($m->zoom_link)
+                                <a href="{{ $m->zoom_link }}" target="_blank" class="btn btn-sm btn-light-success mt-2">Join Makeup</a>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="text-muted text-center py-6">No approved makeups</div>
+                    @endforelse
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-4">
-            <div class="card card-flush shadow-sm h-md-100">
-                <div class="card-header pt-5">
-                    <h3 class="card-title fw-bold text-dark">Recent Materials</h3>
+        {{-- Rejected requests --}}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title fw-bold text-gray-900">Rejected Reschedule Requests</h3>
                 </div>
-                <div class="card-body pt-0">
-                    <div class="d-flex align-items-center mb-7">
-                        <div class="symbol symbol-50px me-5">
-                            <span class="symbol-label bg-light-danger"><i class="ki-duotone ki-file text-danger fs-2x"><span class="path1"></span><span class="path2"></span></i></span>
+                <div class="card-body pt-3">
+                    @forelse($rejectedRequests as $r)
+                        <div class="border-bottom py-3">
+                            <div class="fw-bold text-gray-800">{{ $r->classModule->subject->name ?? 'Class' }}</div>
+                            <div class="fs-7 text-muted">
+                                Requested: {{ \Carbon\Carbon::parse($r->proposed_time)->format('d M Y, h:i A') }}
+                            </div>
+                            <div class="fs-8 text-danger">Reason: {{ \Illuminate\Support\Str::limit($r->reason, 60) }}</div>
                         </div>
-                        <div class="flex-grow-1">
-                            <a href="#" class="text-dark fw-bold text-hover-primary fs-6">Calculus_Notes.pdf</a>
-                            <span class="text-muted d-block fw-semibold">Math • 2 hours ago</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-7">
-                        <div class="symbol symbol-50px me-5">
-                            <span class="symbol-label bg-light-info"><i class="ki-duotone ki-video text-info fs-2x"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <a href="#" class="text-dark fw-bold text-hover-primary fs-6">Newtonian_Physics.mp4</a>
-                            <span class="text-muted d-block fw-semibold">Physics • 1 day ago</span>
-                        </div>
-                    </div>
-                    <a href="#" class="btn btn-light-primary btn-sm w-100 mt-5">Browse All Materials</a>
+                    @empty
+                        <div class="text-muted text-center py-6">No rejected requests</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- Recent quizzes --}}
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title fw-bold text-gray-900">Recent Quiz Results</h3>
+                </div>
+                <div class="card-body pt-3">
+                    <table class="table align-middle table-row-dashed fs-6 gy-4">
+                        <thead>
+                            <tr class="text-muted fw-bold text-uppercase fs-7">
+                                <th>Quiz</th><th>Score</th><th>Correct</th><th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentQuizzes as $q)
+                                <tr>
+                                    <td class="fw-bold text-gray-800">{{ $q->quiz->title ?? 'Quiz' }}</td>
+                                    <td><span class="badge badge-light-primary">{{ $q->score }}%</span></td>
+                                    <td>{{ $q->correct_answers }} / {{ $q->total_questions }}</td>
+                                    <td class="text-muted">{{ $q->created_at->format('d M Y') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center text-muted py-6">No quizzes taken yet</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-
