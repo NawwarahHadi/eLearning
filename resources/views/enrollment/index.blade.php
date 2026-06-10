@@ -67,6 +67,13 @@
         margin-bottom: 3px;
     }
     .ai-score { font-size: 12.5px; color: #9a9a9a; margin-bottom: 1rem; }
+    .ai-reason {
+        font-size: 12.5px;
+        color: #6b7280;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+    .ai-reason strong { color: #4f46e5; }
     .ai-tutor-row {
         display: flex;
         align-items: center;
@@ -92,29 +99,7 @@
     .avatar-indigo { background: #eef2ff; color: #4f46e5; }
     .avatar-amber  { background: #fffbeb; color: #d97706; }
 
-    /* ── Status badges ── */
-    .badge-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 999px;
-    }
-    .badge-pill::before {
-        content: '';
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    .badge-needs   { background: #fff1f2; color: #be123c; }
-    .badge-needs::before   { background: #be123c; }
-    .badge-strength { background: #ecfdf5; color: #059669; }
-    .badge-strength::before { background: #059669; }
-    .badge-discovery { background: #eff6ff; color: #2563eb; }
-    .badge-discovery::before { background: #2563eb; }
+    /* ── Status badges (kept for class form labels) ── */
     .badge-form {
         background: #f1efe8;
         color: #5f5e5a;
@@ -234,43 +219,47 @@
 @section('content')
 <div id="enrollmentPage" class="container mt-5">
 
-    {{-- SECTION 1: AI RECOMMENDATION --}}
+    {{-- SECTION 1: AI RECOMMENDATION (LEVEL-BASED) --}}
     <div class="mb-10">
-        <div class="section-label">Personalized for you</div>
+        {{-- <div class="section-label">Personalized for you</div> --}}
         <div class="section-title">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="8" r="7" stroke="#4f46e5" stroke-width="1.5"/>
                 <path d="M5 8.5l2 2 4-4" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Recommended for you
+            Recommended Class for you
         </div>
+
+        @php
+            $levelLabel = ['low' => 'Foundational', 'medium' => 'Standard', 'good' => 'Advanced'];
+        @endphp
 
         <div class="ai-grid">
             @forelse($recommended as $item)
                 @php
-                    $res = Auth::user()->results->where('subject_id', $item->subject_id)->first();
-                    $initials = strtoupper(substr($item->tutor->name, 0, 2));
+                    $initials = strtoupper(substr($item->tutor->name ?? '??', 0, 2));
+                    $levelText = $levelLabel[$item->level] ?? ucfirst($item->level);
                 @endphp
                 <div class="ai-card"
                      onclick="window.location.href='{{ route('enrollment.tutors', [$item->id, $item->tutor_id]) }}'">
-                    {{-- <div class="ai-card-top">
-                        @if($res && $res->score < 50)
-                            <span class="badge-pill badge-needs">Priority: needs improvement</span>
-                        @elseif($res && $res->score >= 50)
-                            <span class="badge-pill badge-strength">Strength reinforcement</span>
-                        @else
-                            <span class="badge-pill badge-discovery">AI discovery</span>
-                        @endif
-                        <span class="match-pct">{{ $item->ai_match_percentage }}% match</span>
-                    </div> --}}
 
                     <div class="ai-subject">{{ $item->subject->name }}</div>
                     <div class="ai-score">
-                        @if($res)
-                            Your current score: {{ $res->score }}%
+                        @isset($item->student_score)
+                            Your current score: {{ $item->student_score }}%
                         @else
                             New subject for your learning style!
-                        @endif
+                        @endisset
+                    </div>
+
+                    <div class="ai-reason">
+                        Based on your result, we recommend a
+                        <strong>{{ $levelText }}</strong> class
+                        @isset($item->student_score)
+                            to suit your current level.
+                        @else
+                            to get you started.
+                        @endisset
                     </div>
 
                     <div class="ai-tutor-row">
@@ -284,7 +273,7 @@
             @empty
                 <div class="col-span-2">
                     <div class="empty-state">
-                        No AI recommendations yet — try updating your profile or academic results!
+                        No recommendations yet — try updating your profile or academic results!
                     </div>
                 </div>
             @endforelse

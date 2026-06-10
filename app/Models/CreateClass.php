@@ -16,6 +16,7 @@ class CreateClass extends Model
     protected $fillable = [
         'subject_id',
         'tutor_id',
+        'level',
         'category_code',
         'language_code',
         'learning_objective',

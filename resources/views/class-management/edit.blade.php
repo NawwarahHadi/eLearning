@@ -5,21 +5,43 @@
 
 @section('js_after')
     <script src="{{ asset('metronic/js/button_loading.js') }}"></script>
-    <script>
-        // Logic to dynamic add/remove schedules could go here if needed
-        $(document).on('click', '.hapus-data', function(e) {
-            e.preventDefault();
-            let url = $(this).attr("href");
-            Swal.fire({
-                title: 'Warning!',
-                text: 'Are you sure you want to delete this class?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Continue',
-                customClass: { confirmButton: "btn btn-primary", cancelButton: "btn btn-danger" }
-            }).then((result) => { if (result.value) { window.location.href = url; } });
+    <script src="{{ asset('metronic/assets/plugins/custom/formrepeater/formrepeater.bundle.js') }}"></script>
+
+   <script>
+        $(document).ready(function () {
+            // Initialize timepicker for the very first row
+            $(".kt_timepicker").flatpickr({
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true
+            });
+
+            // Initialize the Repeater
+            $('#kt_repeater_schedule').repeater({
+                initEmpty: false,
+
+                show: function () {
+                    $(this).slideDown();
+
+                    // Re-init timepicker for the NEW row specifically
+                    $(this).find('.kt_timepicker').flatpickr({
+                        enableTime: true,
+                        noCalendar: true,
+                        dateFormat: "H:i",
+                        time_24hr: true
+                    });
+                },
+
+                hide: function (deleteElement) {
+                    if(confirm('Are you sure you want to remove this time slot?')) {
+                        $(this).slideUp(deleteElement);
+                    }
+                }
+            });
         });
     </script>
+
 @endsection
 
 @section('content')

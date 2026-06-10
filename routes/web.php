@@ -15,6 +15,7 @@ use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\QuizReviewController;
 use App\Http\Controllers\SchedullingController;
 use App\Http\Controllers\StudentClassController;
 use App\Http\Controllers\WelcomeController;
@@ -197,6 +198,13 @@ Route::middleware('auth')->group(function () {
         //     Route::get('/index', [RolesController::class,'index'])->name('index');
         //     Route::get('/lihat/{id}', [RolesController::class,'lihat'])->name('lihat');
         // });
+    });
+
+    // routes/web.php
+    Route::prefix('quiz-review')->name('quiz.review.')->group(function () {
+        Route::get('/class/{class}', [QuizReviewController::class, 'classQuizzes'])->name('quizzes');
+        Route::get('/quiz/{quiz}', [QuizReviewController::class, 'attempts'])->name('attempts');
+        Route::get('/quiz/{quiz}/student/{student}', [QuizReviewController::class, 'studentAnswers'])->name('answers');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

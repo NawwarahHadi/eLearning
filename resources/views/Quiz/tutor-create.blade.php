@@ -1,10 +1,52 @@
 @extends('layouts.app')
 
+@section('title', 'Create Quiz')
+
+@section('page-header', 'Create Quiz')
+
+@section('js_after')
+<script src="{{ asset('metronic/js/button_loading.js') }}"></script>
+<script>
+    let questionCount = 1;
+
+    function addQuestion() {
+        const wrapper = document.getElementById('questions-wrapper');
+        const newQuestion = `
+            <div class="card border border-dashed p-5 mb-5 question-item" data-index="${questionCount}">
+                <div class="d-flex justify-content-between mb-4">
+                    <h5 class="fw-bold text-primary">Question #${questionCount + 1}</h5>
+                </div>
+                <textarea name="questions[${questionCount}][text]" class="form-control mb-4" placeholder="Enter your question here..." required></textarea>
+                <div class="row g-3">
+                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][a]" class="form-control" placeholder="Option A" required></div>
+                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][b]" class="form-control" placeholder="Option B" required></div>
+                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][c]" class="form-control" placeholder="Option C" required></div>
+                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][d]" class="form-control" placeholder="Option D" required></div>
+                </div>
+                <div class="mt-4">
+                    <label class="form-label fw-bold text-success">Select Correct Answer</label>
+                    <select name="questions[${questionCount}][correct]" class="form-select border-success">
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+            </div>
+        `;
+        wrapper.insertAdjacentHTML('beforeend', newQuestion);
+        questionCount++;
+    }
+</script>
+@endsection
+
 @section('content')
-<div class="container-xxl">
-    <div class="card shadow-sm mb-5">
-        <div class="card-header bg-primary py-5">
-            <h3 class="card-title text-white fw-bolder">Create New Quiz</h3>
+<div id="kt_content_container" class="container-xxl">
+    <div class="card mb-5 mb-xl-10">
+        <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" aria-expanded="true">
+            <div class="card-title m-0">
+                <h3 class="fw-bold m-0">Create Quiz </h3>
+            </div>
         </div>
         <div class="card-body">
             <form action="{{ route('quiz.store') }}" method="POST">
@@ -15,17 +57,15 @@
 
 
                 <div class="mb-8">
-                    <label class="form-label fw-bold">Quiz Title</label>
+                    <label class="fs-5 fw-semibold mb-2">Quiz Title</label>
                     <input type="text" name="title" class="form-control form-control-solid" placeholder="e.g. Chapter 1: Introduction to Grammar" required>
                 </div>
-
-                <hr class="my-10">
 
                 {{-- Questions Container --}}
                 <div id="questions-wrapper">
                     <div class="card border border-dashed p-5 mb-5 question-item" data-index="0">
                         <div class="d-flex justify-content-between mb-4">
-                            <h5 class="fw-bold text-primary">Question #1</h5>
+                            <h5 class="fw-bold">Question #1</h5>
                         </div>
 
                         <textarea name="questions[0][text]" class="form-control mb-4" placeholder="Enter your question here..." required></textarea>
@@ -73,46 +113,25 @@
                     <i class="ki-duotone ki-plus fs-2"></i> Add Another Question
                 </button>
 
-                <div class="separator my-5"></div>
-
-                <button type="submit" class="btn btn-primary w-100 fs-3">
+                <div class="card-footer d-flex justify-content-end py-6 px-9">
+                    <button type="submit" class="btn btn-success button-loading">
+                        <i class="ki-duotone ki-send">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <span class="indicator-label">
+                        Save
+                        </span>
+                        <span class="indicator-progress">
+                            please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                        </span>
+                    </button>
+                </div>
+                {{-- <button type="submit" class="btn btn-primary w-100 fs-3">
                     <i class="ki-duotone ki-send fs-2"></i> Publish Quiz
-                </button>
+                </button> --}}
             </form>
         </div>
     </div>
 </div>
-
-<script>
-    let questionCount = 1;
-
-    function addQuestion() {
-        const wrapper = document.getElementById('questions-wrapper');
-        const newQuestion = `
-            <div class="card border border-dashed p-5 mb-5 question-item" data-index="${questionCount}">
-                <div class="d-flex justify-content-between mb-4">
-                    <h5 class="fw-bold text-primary">Question #${questionCount + 1}</h5>
-                </div>
-                <textarea name="questions[${questionCount}][text]" class="form-control mb-4" placeholder="Enter your question here..." required></textarea>
-                <div class="row g-3">
-                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][a]" class="form-control" placeholder="Option A" required></div>
-                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][b]" class="form-control" placeholder="Option B" required></div>
-                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][c]" class="form-control" placeholder="Option C" required></div>
-                    <div class="col-md-6"><input type="text" name="questions[${questionCount}][d]" class="form-control" placeholder="Option D" required></div>
-                </div>
-                <div class="mt-4">
-                    <label class="form-label fw-bold text-success">Select Correct Answer</label>
-                    <select name="questions[${questionCount}][correct]" class="form-select border-success">
-                        <option value="A">Option A</option>
-                        <option value="B">Option B</option>
-                        <option value="C">Option C</option>
-                        <option value="D">Option D</option>
-                    </select>
-                </div>
-            </div>
-        `;
-        wrapper.insertAdjacentHTML('beforeend', newQuestion);
-        questionCount++;
-    }
-</script>
 @endsection

@@ -53,40 +53,39 @@ class ClassManagementController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
         $request->validate([
-            'subject_id'           => ['required', 'exists:subjects,id'],
-            'class_schedules'      => ['required', 'array'],
-            'category_code'        => ['required'],
-            'language_code'        => ['required'],
-            'learning_objective' => ['required'],
+            'subject_id'                   => ['required', 'exists:subjects,id'],
+            'class_schedules'              => ['required', 'array'],
+            'level'                        => ['required', 'in:low,medium,good'], // single value
+            'category_code'                => ['required'],
+            'language_code'                => ['required'],
+            'learning_objective'           => ['required'],
             'class_schedules.*.day'        => ['required'],
             'class_schedules.*.start_time' => ['required'],
             'class_schedules.*.end_time'   => ['required'],
-            // 'fee'                  => ['required', 'numeric'], // Still validated if needed
-            'max_students'         => ['required', 'integer'],
+            // 'fee'                       => ['required', 'numeric'],
+            'max_students'                 => ['required', 'integer'],
         ]);
 
         // 1. Calculate Total Hours Per Week
         $totalHours = 0;
         foreach ($request->class_schedules as $schedule) {
             $start = \Carbon\Carbon::parse($schedule['start_time']);
-            $end = \Carbon\Carbon::parse($schedule['end_time']);
-
-            // Calculate difference in hours (e.g., 2:00 PM to 3:30 PM = 1.5)
+            $end   = \Carbon\Carbon::parse($schedule['end_time']);
             $totalHours += $start->diffInMinutes($end) / 60;
         }
 
         // 2. Create the Class with calculated hours
         $class = CreateClass::create([
-            'subject_id'           => $request['subject_id'],
-            'tutor_id'             => Auth::id(), // Automatically uses logged-in tutor
-            'category_code'        => $request['category_code'],
-            'language_code'        => $request['language_code'],
+            'subject_id'         => $request['subject_id'],
+            'tutor_id'           => Auth::id(),
+            'level'              => $request['level'], // SAVING LEVEL
+            'category_code'      => $request['category_code'],
+            'language_code'      => $request['language_code'],
             'learning_objective' => $request['learning_objective'],
-            // 'fee'                  => $request['fee'],
-            'max_students'         => $request['max_students'],
-            'hours_per_week'       => $totalHours, // SAVING DYNAMIC HOURS
+            // 'fee'             => $request['fee'],
+            'max_students'       => $request['max_students'],
+            'hours_per_week'     => $totalHours,
         ]);
 
         // 3. Save Schedules
@@ -113,7 +112,9 @@ class ClassManagementController extends Controller
      */
     public function edit(string $id)
     {
-        $class = CreateClass::with('schedules')->findOrFail($id);
+        $class = CreateClass::with(['schedules' => function ($q) {
+            $q->where('is_temporary', 0); // only original slots, not reschedules
+        }])->findOrFail($id);
 
         $data = [
             'class'        => $class,
@@ -131,31 +132,46 @@ class ClassManagementController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // dd($request->all());
         // 1. Find the existing class
         $class = CreateClass::findOrFail($id);
 
-        // 2. Validate (identical to store)
+        // 2. Validate
         $request->validate([
-            'subject_id'           => ['required', 'exists:subjects,id'],
-            'class_schedules'      => ['required', 'array'],
-            'category_code'        => ['required'],
-            'language_code'        => ['required'],
-            'learning_objective' => ['required'],
-            'fee'                  => ['required', 'numeric'],
-            'max_students'         => ['required', 'integer'],
+            'subject_id'                   => ['required', 'exists:subjects,id'],
+            'class_schedules'              => ['required', 'array'],
+            'level'                        => ['required', 'in:low,medium,good'], // added
+            'category_code'                => ['required'],
+            'language_code'                => ['required'],
+            'learning_objective'           => ['required'],
+            'class_schedules.*.day'        => ['required'],
+            'class_schedules.*.start_time' => ['required'],
+            'class_schedules.*.end_time'   => ['required'],
+            // 'fee'                       => ['required', 'numeric'], // removed — no fee field
+            'max_students'                 => ['required', 'integer'],
         ]);
 
-        // 3. UPDATE the existing record (Don't use 'create')
+        // 3. Recalculate total hours per week
+        $totalHours = 0;
+        foreach ($request->class_schedules as $schedule) {
+            $start = \Carbon\Carbon::parse($schedule['start_time']);
+            $end   = \Carbon\Carbon::parse($schedule['end_time']);
+            $totalHours += $start->diffInMinutes($end) / 60;
+        }
+
+        // 4. Update the existing record
         $class->update([
-            'subject_id'           => $request->subject_id,
-            'category_code'        => $request->category_code,
-            'language_code'        => $request->language_code,
+            'subject_id'         => $request->subject_id,
+            'level'              => $request->level, // added
+            'category_code'      => $request->category_code,
+            'language_code'      => $request->language_code,
             'learning_objective' => $request->learning_objective,
-            'fee'                  => $request->fee,
-            'max_students'         => $request->max_students,
+            // 'fee'             => $request->fee,
+            'max_students'       => $request->max_students,
+            'hours_per_week'     => $totalHours,
         ]);
 
-        // 4. Refresh Schedules (Delete old and replace)
+        // 5. Refresh ONLY original schedules (keep reschedule rows untouched)
         $class->schedules()->where('is_temporary', 0)->delete();
         foreach ($request->class_schedules as $schedule) {
             ClassSchedule::create([
@@ -163,7 +179,7 @@ class ClassManagementController extends Controller
                 'day'         => $schedule['day'],
                 'start_time'  => $schedule['start_time'],
                 'end_time'    => $schedule['end_time'],
-                'is_temporary'=> 0,   // ← explicitly mark as permanent
+                'is_temporary'=> 0,
             ]);
         }
 

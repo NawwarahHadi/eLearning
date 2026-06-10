@@ -85,9 +85,9 @@
                             </td>
 
                             <td>
-                                <a href="{{ route('class.edit', $item->id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit">
+                                {{-- <a href="{{ route('class.edit', $item->id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit">
                                     <i class="ki-duotone text-warning ki-notepad-edit fs-2"><span class="path1"></span><span class="path2"></span></i>
-                                </a>
+                                </a> --}}
 
                                 <a href="{{ route('class.destroy', $item->id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm hapus-data me-1" data-bs-toggle="tooltip" title="Delete">
                                     <i class="ki-duotone text-danger ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
@@ -99,6 +99,13 @@
 
                                 <a href="{{ route('class.show', $item->id) }}" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" data-bs-toggle="tooltip" title="View Students">
                                     <i class="ki-duotone ki-user ki-graph-up text-success fs-2"><span class="path1"></span><span class="path2"></span></i>
+                                </a>
+                                <a href="{{ route('quiz.review.quizzes', $item->id) }}" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" data-bs-toggle="tooltip" title="View Quiz Result">
+                                    <i class="ki-duotone text-warning ki-award fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                        <span class="path3"></span>
+                                    </i>
                                 </a>
                             </td>
                         </tr>

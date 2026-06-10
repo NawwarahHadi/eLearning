@@ -80,7 +80,7 @@
     <div class="card mb-5 mb-xl-10">
         <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" aria-expanded="true">
             <div class="card-title m-0">
-                <h3 class="fw-bold m-0">Class </h3>
+                <h3 class="fw-bold m-0">Learning Materials </h3>
             </div>
         </div>
         <form method="post" action="{{route ('learning-material.store')}}" enctype="multipart/form-data">
