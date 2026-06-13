@@ -168,14 +168,6 @@ Route::middleware('auth')->group(function () {
 
     });
 
-    // Route::prefix('course_assesment')->name('course_assesment.')->group(function () {
-    //     Route::get('/index/{class_id}', [CourseAssessmentController::class, 'index'])->name('index');
-    //     Route::post('/store', [CourseAssessmentController::class, 'store'])->name('store');
-    //     Route::get('/show', [CourseAssessmentController::class, 'showAdmin'])->name('show-admin');
-    //     Route::get('/show/tutor', [CourseAssessmentController::class, 'showTutor'])->name('show-tutor');
-
-    // });
-
     ##Chat
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [ChatController::class, 'index'])->name('index');
@@ -188,24 +180,33 @@ Route::middleware('auth')->group(function () {
 
     });
 
-    Route::prefix('user-management')->name('user-management.')->group(function () {
-        Route::get('/index', [ManageUserController::class,'index'])->name('index');
-        Route::get('/index/evaluate', [ManageUserController::class,'indexEvaluate'])->name('indexEvaluate');
-        Route::get('/index/payment', [ManageUserController::class,'indexPayment'])->name('indexPayment');
-        Route::get('/tambah', [ManageUserController::class,'create'])->name('tambah');
-        Route::post('/simpan', [ManageUserController::class,'store'])->name('simpan');
-        Route::post('/update/{id}', [ManageUserController::class,'update'])->name('update');
-        Route::get('/kemaskini/{id}', [ManageUserController::class,'edit'])->name('kemaskini');
-        Route::get('/hapus/{id}', [ManageUserController::class,'destroy'])->name('hapus');
-        Route::get('/login/{id}', [ManageUserController::class, 'loginPengguna'])->name('login-pengguna');
-        Route::get('/set-kata-laluan/{id}', [ManageUserController::class,'setKataLaluan'])->name('set-kata-laluan');
-        Route::post('/peranan-pengguna/simpan/{id}', [ManageUserController::class,'perananPengguna'])->name('peranan-pengguna-simpan');
+    // Route::prefix('user-management')->name('user-management.')->group(function () {
+    //     Route::get('/index', [ManageUserController::class,'index'])->name('index');
+    //     Route::get('/tambah', [ManageUserController::class,'create'])->name('tambah');
+    //     Route::post('/simpan', [ManageUserController::class,'store'])->name('simpan');
+    //     Route::post('/update/{id}', [ManageUserController::class,'update'])->name('update');
+    //     Route::get('/kemaskini/{id}', [ManageUserController::class,'edit'])->name('kemaskini');
+    //     Route::get('/hapus/{id}', [ManageUserController::class,'destroy'])->name('hapus');
+    //     Route::get('/login/{id}', [ManageUserController::class, 'loginPengguna'])->name('login-pengguna');
+    //     Route::get('/set-kata-laluan/{id}', [ManageUserController::class,'setKataLaluan'])->name('set-kata-laluan');
+    //     Route::post('/peranan-pengguna/simpan/{id}', [ManageUserController::class,'perananPengguna'])->name('peranan-pengguna-simpan');
 
-        ##Roles
-        // Route::prefix('roles')->name('roles.')->group(function () {
-        //     Route::get('/index', [RolesController::class,'index'])->name('index');
-        //     Route::get('/lihat/{id}', [RolesController::class,'lihat'])->name('lihat');
-        // });
+    //     ##Roles
+    //     // Route::prefix('roles')->name('roles.')->group(function () {
+    //     //     Route::get('/index', [RolesController::class,'index'])->name('index');
+    //     //     Route::get('/lihat/{id}', [RolesController::class,'lihat'])->name('lihat');
+    //     // });
+    // });
+
+    ##Manage User
+    Route::prefix('user-management')->name('user-management.')->group(function () {
+        Route::get('/index', [ManageUserController::class, 'index'])->name('index');
+        Route::get('/edit/{id}', [ManageUserController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [ManageUserController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [ManageUserController::class, 'destroy'])->name('delete');
+        Route::post('/change-role/{id}', [ManageUserController::class, 'changeRole'])->name('change-role');
+        Route::get('/login-as/{id}', [ManageUserController::class, 'loginAs'])->name('login-as');
+        Route::get('/set-password/{id}', [ManageUserController::class, 'setPassword'])->name('set-password');
     });
 
     // routes/web.php

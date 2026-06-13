@@ -70,23 +70,7 @@
                         <span class="menu-title fw-semibold">Payment</span>
                     </a>
                 </div>
-                {{-- <div class="menu-item">
-                    <a class="menu-link" href="{{route ('enrollment.admin.index')}}">
-                        <span class="menu-icon">
-                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
-                        </span>
-                        <span class="menu-title fw-semibold">All Enrollments</span>
-                    </a>
-                </div> --}}
 
-                {{-- <div class="menu-item">
-                    <a class="menu-link" href="{{route ('payment.index')}}">
-                        <span class="menu-icon">
-                            <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
-                        </span>
-                        <span class="menu-title fw-semibold">Payment</span>
-                    </a>
-                </div> --}}
                 {{-- <div class="menu-item">
                     <a class="menu-link" href="{{route ('enrollment.admin.tutorChanges')}}">
                         <span class="menu-icon">
@@ -94,15 +78,15 @@
                         </span>
                         <span class="menu-title fw-semibold">Request Change Tutor</span>
                     </a>
-                </div>
+                </div> --}}
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('user-management.index')}}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
                         </span>
-                        <span class="menu-title fw-semibold">Request Change Tutor</span>
+                        <span class="menu-title fw-semibold">Manage User</span>
                     </a>
-                </div> --}}
+                </div>
                 @endif
 
                 {{-- ==========================================

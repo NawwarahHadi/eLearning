@@ -8,8 +8,10 @@ use App\Models\Enrollment;
 use App\Models\Evaluation;
 use App\Models\Feedback;
 use App\Models\LearningMaterial;
+use App\Models\Payment;
 use App\Models\Quiz;
 use App\Models\RescheduleRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,15 +22,64 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Static stats for top cards
+        // ─── Last 6 months data for charts ───
+        $revenueData  = [];
+        $approvedData = [];
+        $rejectedData = [];
+        $months       = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $months[] = $month->format('M');
+
+            $revenueData[] = (float) Payment::where('status', 'paid')
+                ->whereYear('paid_at', $month->year)
+                ->whereMonth('paid_at', $month->month)
+                ->sum('amount');
+
+            $approvedData[] = User::where('status', 'approved')
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->count();
+
+            $rejectedData[] = User::where('status', 'rejected')
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->count();
+        }
+
+        // ─── Stats Cards ───
         $stats = [
-            'total_students' => 1250,
-            'pending_apps' => 45,
-            'revenue' => 15250.00,
-            'rejected_apps' => 12
+            'total_students'    => User::where('role', 'student')->count(),
+            'total_tutors'      => User::where('role', 'tutor')->where('status', 'approved')->count(),
+            'revenue'           => Payment::where('status', 'paid')
+                                    ->whereMonth('paid_at', now()->month)
+                                    ->whereYear('paid_at', now()->year)
+                                    ->sum('amount'),
+            'pending_apps'      => User::where('status', 'pending')->count(),
+            'total_classes'     => CreateClass::count(),
+            'total_enrollments' => Enrollment::where('status', 'approve')->count(),
+            'pending_payments'  => Payment::where('status', 'pending')->count(),
+            'rejected_apps'     => User::where('status', 'rejected')->count(),
         ];
 
-        return view('dashboardAdmin', compact('stats'));
+        // ─── Popular Classes ───
+        $popularClasses = Enrollment::with(['class.subject', 'class.tutor'])
+            ->selectRaw('class_id, count(*) as total_students')
+            ->where('status', 'approve')
+            ->groupBy('class_id')
+            ->orderByDesc('total_students')
+            ->take(4)
+            ->get();
+
+        return view('dashboardAdmin', compact(
+            'stats',
+            'months',
+            'revenueData',
+            'approvedData',
+            'rejectedData',
+            'popularClasses'
+        ));
     }
 
     public function indexTutor()
