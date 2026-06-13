@@ -19,6 +19,7 @@ use App\Http\Controllers\QuizReviewController;
 use App\Http\Controllers\SchedullingController;
 use App\Http\Controllers\StudentClassController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,8 @@ Route::get('/dashboard', function () {
 Route::get('/dashboard/Admin', [DashboardController::class, 'index'])->name('dashboard.admin');
 Route::get('/dashboard/tutor', [DashboardController::class, 'indexTutor'])->name('dashboard.tutor');
 Route::get('/dashboard/student', [DashboardController::class, 'indexStudent'])->name('dashboard.student');
+
+Route::post('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback')->withoutMiddleware([VerifyCsrfToken::class]);
 
 Route::middleware('auth')->group(function () {
 
@@ -145,11 +148,16 @@ Route::middleware('auth')->group(function () {
 
     ##Payment
     Route::prefix('payment')->name('payment.')->group(function () {
-        Route::get('/index', [PaymentController::class, 'index'])->name('index');
+        Route::get('/history', [PaymentController::class, 'index'])->name('index');
+        Route::get('/admin', [PaymentController::class, 'adminIndex'])->name('admin-index');
+        Route::get('/return', [PaymentController::class, 'returnCallback'])->name('return');
+        Route::get('/receipt/{payment_id}', [PaymentController::class, 'receipt'])->name('receipt');
+        Route::post('/create', [PaymentController::class, 'create'])->name('create');
         Route::post('/bills', [PaymentController::class, 'generateAllMonthlyBills'])->name('generate-all-bills');
         Route::post('/bills/{class_id}', [PaymentController::class, 'generateMonthlyBill'])->name('generate-single-bill');
-
+        Route::get('/{enrollment_id}', [PaymentController::class, 'show'])->name('show');
     });
+
 
     ##Feedback
     Route::prefix('feedback')->name('feedback.')->group(function () {

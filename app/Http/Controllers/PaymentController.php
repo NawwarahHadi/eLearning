@@ -2,174 +2,483 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CreateClass;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected $ratePerHour = 50; // RM50 per hour
+
+    // ─────────────────────────────────────────
+    // Show Payment Summary Page
+    // ─────────────────────────────────────────
+    // public function show(int $enrollment_id)
+    // {
+
+    //     $enrollment = Enrollment::with(['class.subject', 'tutor', 'schedule'])
+    //         ->findOrFail($enrollment_id);
+
+    //     // Get ALL enrollments for same class and tutor for this student
+    //     $allEnrollments = Enrollment::with(['schedule'])
+    //         ->where('student_id', $enrollment->student_id)
+    //         ->where('class_id', $enrollment->class_id)
+    //         ->where('tutor_id', $enrollment->tutor_id)
+    //         ->get();
+
+    //     // Calculate total hours and amount
+    //     $breakdown = $allEnrollments->map(function ($enroll) {
+    //         $start = Carbon::parse($enroll->schedule->start_time);
+    //         $end   = Carbon::parse($enroll->schedule->end_time);
+    //         $hours = $start->diffInHours($end);
+    //         $fee   = $hours * $this->ratePerHour;
+
+    //         return [
+    //             'enrollment_id' => $enroll->id,
+    //             'day'           => $enroll->schedule->day,
+    //             'start_time'    => $start->format('h:i A'),
+    //             'end_time'      => $end->format('h:i A'),
+    //             'hours'         => $hours,
+    //             'fee'           => $fee,
+    //         ];
+    //     });
+
+    //     $totalHours  = $breakdown->sum('hours');
+    //     $totalAmount = $breakdown->sum('fee');
+
+    //     // Check if already paid
+    //     $existingPayment = Payment::where('enrollment_id', $enrollment_id)
+    //         ->where('status', 'paid')
+    //         ->first();
+
+    //     return view('payment.show', compact(
+    //         'enrollment',
+    //         'allEnrollments',
+    //         'breakdown',
+    //         'totalHours',
+    //         'totalAmount',
+    //         'existingPayment'
+    //     ));
+    // }
+    public function show(int $enrollment_id)
     {
-        // Fetch students who have active enrollments (as seen in your database sidebar)
-        $students = User::whereHas('enrollments')
-                    ->withCount('enrollments')
-                    ->get();
+        $enrollment = Enrollment::with(['class.subject', 'tutor', 'schedule', 'student'])
+            ->findOrFail($enrollment_id);
 
-        return view('payment.index', compact('students'));
-    }
+        // Get ALL enrollments for same class and tutor for this student
+        $allEnrollments = Enrollment::with(['schedule'])
+            ->where('student_id', $enrollment->student_id)
+            ->where('class_id', $enrollment->class_id)
+            ->where('tutor_id', $enrollment->tutor_id)
+            ->get();
 
-    public function generateMonthlyBill(int $student_id)
-    {
-        // 1. Get all enrollments with the associated class data
-        $enrollments = Enrollment::with('class')->where('student_id', $student_id)->get();
+        // Calculate total hours and amount
+        $breakdown = $allEnrollments->map(function ($enroll) {
+            $start = Carbon::parse($enroll->schedule->start_time);
+            $end   = Carbon::parse($enroll->schedule->end_time);
+            $hours = $start->diffInHours($end);
+            $fee   = $hours * $this->ratePerHour;
 
-        $hourlyRate = 50.00; // Updated to your new rate
-        $weeksInMonth = 4;
-        $totalMonthlyHours = 0;
+            return [
+                'enrollment_id' => $enroll->id,
+                'day'           => $enroll->schedule->day,
+                'start_time'    => $start->format('h:i A'),
+                'end_time'      => $end->format('h:i A'),
+                'hours'         => $hours,
+                'fee'           => $fee,
+            ];
+        });
 
-        foreach ($enrollments as $enrollment) {
-            // Dynamically get hours from the CreateClass model
-            // This replaces the ($enrollment->class_id == 'math_id') check
-            $hoursPerWeek = $enrollment->class->hours_per_week ?? 1.0;
+        $totalHours  = $breakdown->sum('hours');
+        $totalAmount = $breakdown->sum('fee');
 
-            $totalMonthlyHours += ($hoursPerWeek * $weeksInMonth);
+        $currentMonth = now()->format('Y-m');
+
+        // Check if already paid for current month
+        $existingPayment = Payment::where('enrollment_id', $enrollment_id)
+            ->where('status', 'paid')
+            ->where('billing_month', $currentMonth)
+            ->first();
+
+        // Get pending payment for current month (monthly bill generated by admin)
+        $pendingPayment = Payment::where('enrollment_id', $enrollment_id)
+            ->where('status', 'pending')
+            ->where('billing_month', $currentMonth)
+            ->latest()
+            ->first();
+
+        // Fallback: get any pending payment if no monthly bill exists
+        if (!$pendingPayment) {
+            $pendingPayment = Payment::where('enrollment_id', $enrollment_id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
         }
 
-        $monthlyTotal = $totalMonthlyHours * $hourlyRate;
-
-        // 2. Create the invoice
-        Payment::create([
-            'student_id' => $student_id,
-            // Using 'addMonth' if you are billing for the upcoming month
-            'billing_month' => now()->addMonth()->format('F Y'),
-            'total_amount' => $monthlyTotal,
-            'status' => 'unpaid'
-        ]);
-
-        return back()->with('success', 'Monthly invoice generated based on enrolled class hours!');
+        return view('payment.show', compact(
+            'enrollment',
+            'allEnrollments',
+            'breakdown',
+            'totalHours',
+            'totalAmount',
+            'existingPayment',
+            'pendingPayment',
+            'currentMonth'
+        ));
     }
 
-
-
-   // PaymentController.php
-
-    public function generateAllMonthlyBills()
+    // ─────────────────────────────────────────
+    // Create Bill and Redirect to Toyyibpay
+    // ─────────────────────────────────────────
+    public function create(Request $request)
     {
-        // 1. Get unique student IDs from your enrollment table
-        $studentIds = Enrollment::distinct()->pluck('student_id');
-        $billingMonth = now()->addMonth()->format('F Y');
-        $hourlyRate = 50.00; // Your standardized fee
+        $request->validate([
+            'enrollment_id' => 'required|exists:enrollments,id',
+            'total_amount'  => 'required|numeric|min:1',
+        ]);
 
-        foreach ($studentIds as $id) {
-            // Prevent duplicate billing records
-            $exists = Payment::where('student_id', $id)
-                            ->where('billing_month', $billingMonth)
-                            ->exists();
+        $enrollment = Enrollment::with(['class.subject', 'tutor', 'student'])
+            ->findOrFail($request->enrollment_id);
 
-            if (!$exists) {
-                // 2. Use the 'class' relationship from your Enrollment model
-                $enrollments = Enrollment::with('class')->where('student_id', $id)->get();
-                $totalMonthlyHours = 0;
+        $currentMonth = now()->format('Y-m');
 
-                foreach ($enrollments as $enrollment) {
-                    // Accessing hours_per_week from your CreateClass model dynamically
-                    $hours = $enrollment->class->hours_per_week ?? 1.0;
-                    $totalMonthlyHours += ($hours * 4); // Calculate for 4 weeks
+        // ✅ Check duplicate for current month only
+        $existing = Payment::where('enrollment_id', $enrollment->id)
+            ->where('status', 'paid')
+            ->where('billing_month', $currentMonth)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('payment.index')
+                ->with('error', 'You have already paid for this month.');
+        }
+
+        // ✅ Get existing pending payment to update instead of creating new
+        $payment = Payment::where('enrollment_id', $enrollment->id)
+            ->where('status', 'pending')
+            ->where('billing_month', $currentMonth)
+            ->latest()
+            ->first();
+
+        $orderId     = 'ORD-' . strtoupper(Str::random(10));
+        $amountCents = $request->total_amount * 100;
+
+        $response = Http::asForm()->post(env('TOYYIBPAY_URL') . '/index.php/api/createBill', [
+            'userSecretKey'           => env('TOYYIBPAY_API_KEY'),
+            'categoryCode'            => env('TOYYIBPAY_CATEGORY_CODE'),
+            'billName'                => 'Tuition-' . Str::limit($enrollment->class->subject->name, 30),
+            'billDescription'         => 'Tuition fee for ' . $enrollment->class->subject->name,
+            'billPriceSetting'        => 1,
+            'billPayorInfo'           => 1,
+            'billAmount'              => $amountCents,
+            'billReturnUrl'           => route('payment.return'),
+            'billCallbackUrl'         => route('payment.callback'),
+            'billExternalReferenceNo' => $orderId,
+            'billTo'                  => $enrollment->student->name ?? Auth::user()->name,
+            'billEmail'               => $enrollment->student->email ?? Auth::user()->email,
+            'billPhone'               => $enrollment->student->phone ?? '0123456789',
+            'billSplitPayment'        => 0,
+            'billSplitPaymentArgs'    => '',
+            'billPaymentChannel'      => 2,
+            'billContentEmail'        => 'Thank you for your payment to Al-Amin Tuition Centre.',
+            'billChargeToCustomer'    => 1,
+        ]);
+
+        $billCode = $response->json()[0]['BillCode'] ?? null;
+
+        if (!$billCode) {
+            return back()->with('error', 'Failed to create payment bill. Please try again.');
+        }
+
+        // ✅ Update existing pending payment OR create new one
+        if ($payment) {
+            $payment->update([
+                'bill_code' => $billCode,
+                'order_id'  => $orderId,
+                'amount'    => $request->total_amount,
+            ]);
+        } else {
+            Payment::create([
+                'enrollment_id' => $enrollment->id,
+                'student_id'    => $enrollment->student_id,
+                'bill_code'     => $billCode,
+                'order_id'      => $orderId,
+                'amount'        => $request->total_amount,
+                'billing_month' => $currentMonth,
+                'status'        => 'pending',
+            ]);
+        }
+
+        return redirect(env('TOYYIBPAY_URL') . '/' . $billCode);
+    }
+
+    // ─────────────────────────────────────────
+    // Toyyibpay POST Callback (update status)
+    // ─────────────────────────────────────────
+    // public function callback(Request $request)
+    // {
+    //     $payment = Payment::where('order_id', $request->billExternalReferenceNo)->first();
+
+    //     if (!$payment) {
+    //         return response('OK', 200);
+    //     }
+
+    //     if ($request->status == 1) {
+    //         $payment->update([
+    //             'status'  => 'paid',
+    //             'paid_at' => now(),
+    //         ]);
+    //     } else {
+    //         $payment->update(['status' => 'failed']);
+    //     }
+
+    //     return response('OK', 200);
+    // }
+
+    // // ─────────────────────────────────────────
+    // // Return URL After Payment
+    // // ─────────────────────────────────────────
+    // public function returnCallback(Request $request)
+    // {
+    //     $payment = Payment::where('order_id', $request->billExternalReferenceNo)
+    //         ->with('enrollment')
+    //         ->first();
+
+    //     if ($payment && $payment->status === 'paid') {
+    //         return redirect()->route('payment.index')
+    //             ->with('success', 'Payment successful! Your enrollment is confirmed.');
+    //     }
+
+    //     return redirect()->route('payment.index')
+    //         ->with('error', 'Payment was not completed. Please try again.');
+    // }
+
+    // ─────────────────────────────────────────
+    // Toyyibpay POST Callback (Background update)
+    // ─────────────────────────────────────────
+    public function callback(Request $request)
+    {
+        // ToyyibPay sends 'order_id' via POST
+        $payment = Payment::where('order_id', $request->order_id)->first();
+
+        if ($payment && $request->status == 1) {
+            $payment->update([
+                'status'  => 'paid',
+                'paid_at' => now(),
+            ]);
+            return response('OK', 200);
+        }
+
+        return response('Failed', 400);
+    }
+
+    // ─────────────────────────────────────────
+    // Return URL After Payment (User redirection)
+    // ─────────────────────────────────────────
+    public function returnCallback(Request $request)
+    {
+        // ToyyibPay sends 'order_id' and 'status_id' in the URL query string
+        $orderId = $request->query('order_id');
+        $statusId = $request->query('status_id');
+
+        $payment = Payment::where('order_id', $orderId)->first();
+
+        if ($payment && ($statusId == 1 || $payment->status === 'paid')) {
+            // Just in case callback was slow, update here too
+            if ($payment->status !== 'paid') {
+                $payment->update(['status' => 'paid', 'paid_at' => now()]);
+            }
+            return redirect()->route('payment.index')->with('success', 'Payment successful!');
+        }
+
+        return redirect()->route('payment.index')->with('error', 'Payment failed.');
+    }
+
+    // ─────────────────────────────────────────
+    // Student Payment History
+    // ─────────────────────────────────────────
+    public function index()
+    {
+        $payments = Payment::with(['enrollment.class.subject'])
+            ->where('student_id', Auth::id())
+            ->latest()
+            ->get();
+
+        return view('payment.index', compact('payments'));
+    }
+
+    public function receipt(int $payment_id)
+    {
+        $payment = Payment::with([
+            'student',
+            'enrollment.class.subject',
+            'enrollment.tutor',
+            'enrollment.schedule',
+        ])->findOrFail($payment_id);
+
+        // Get all enrollments for same class to show breakdown
+        $allEnrollments = Enrollment::with(['schedule'])
+            ->where('student_id', $payment->student_id)
+            ->where('class_id', $payment->enrollment->class_id)
+            ->where('tutor_id', $payment->enrollment->tutor_id)
+            ->get();
+
+        $breakdown = $allEnrollments->map(function ($enroll) {
+            $start = \Carbon\Carbon::parse($enroll->schedule->start_time);
+            $end   = \Carbon\Carbon::parse($enroll->schedule->end_time);
+            $hours = $start->diffInHours($end);
+            return [
+                'day'        => $enroll->schedule->day,
+                'start_time' => $start->format('h:i A'),
+                'end_time'   => $end->format('h:i A'),
+                'hours'      => $hours,
+                'fee'        => $hours * 50,
+            ];
+        });
+
+        $totalHours = $breakdown->sum('hours');
+
+        return view('payment.receipt', compact('payment', 'breakdown', 'totalHours'));
+    }
+
+    public function adminIndex()
+    {
+        $payments = Payment::with(['student', 'enrollment.class.subject'])
+            ->latest()
+            ->paginate(8);
+
+        $totalPaid    = Payment::where('status', 'paid')->sum('amount');
+        $totalPending = Payment::where('status', 'pending')->count();
+        $totalFailed  = Payment::where('status', 'failed')->count();
+        $classes      = CreateClass::with('subject')->get();
+
+        $students = User::whereHas('enrollments')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.payment', compact(
+            'payments',
+            'totalPaid',
+            'totalPending',
+            'totalFailed',
+            'classes',
+            'students'
+        ));
+    }
+
+    public function generateMonthlyBill(Request $request, $class_id)
+    {
+        $request->validate([
+            'billing_month' => 'required|date_format:Y-m',
+            'student_id'    => 'required|exists:users,id',
+        ]);
+
+        $billingMonth = $request->billing_month;
+        $studentId    = $request->student_id;
+
+        // Get all enrollments for this specific student
+        $enrollments = Enrollment::with(['schedule'])
+            ->where('student_id', $studentId)
+            ->where('status', 'approve')
+            ->get()
+            ->groupBy('class_id'); // one bill per class
+
+        $generated = 0;
+        $skipped   = 0;
+
+        foreach ($enrollments as $classId => $studentEnrollments) {
+            $firstEnrollment = $studentEnrollments->first();
+
+            $totalAmount = $studentEnrollments->sum(function ($enrollment) {
+                if (!$enrollment->schedule) return 0;
+                $start = \Carbon\Carbon::parse($enrollment->schedule->start_time);
+                $end   = \Carbon\Carbon::parse($enrollment->schedule->end_time);
+                $hours = $start->diffInHours($end);
+                return $hours * 50;
+            });
+
+            $exists = Payment::where('enrollment_id', $firstEnrollment->id)
+                ->where('billing_month', $billingMonth)
+                ->exists();
+
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            Payment::create([
+                'enrollment_id' => $firstEnrollment->id,
+                'student_id'    => $studentId,
+                'order_id'      => 'ORD-' . strtoupper(Str::random(10)),
+                'amount'        => $totalAmount,
+                'billing_month' => $billingMonth,
+                'status'        => 'pending',
+            ]);
+
+            $generated++;
+        }
+
+        return back()->with('success', "Bills generated: {$generated} new, {$skipped} already existed.");
+    }
+
+    // 3. Generate Monthly Bill for ALL classes at once
+    public function generateAllMonthlyBills(Request $request)
+    {
+        $request->validate([
+            'billing_month' => 'required|date_format:Y-m',
+        ]);
+
+        $billingMonth = $request->billing_month;
+        $classes      = CreateClass::all();
+        $generated    = 0;
+        $skipped      = 0;
+
+        foreach ($classes as $class) {
+            $enrollments = Enrollment::with(['schedule'])
+                ->where('class_id', $class->id)
+                ->where('status', 'approve')
+                ->get()
+                ->groupBy('student_id');
+
+            foreach ($enrollments as $studentId => $studentEnrollments) {
+                $firstEnrollment = $studentEnrollments->first();
+
+                $totalAmount = $studentEnrollments->sum(function ($enrollment) {
+                    if (!$enrollment->schedule) return 0;
+                    $start = \Carbon\Carbon::parse($enrollment->schedule->start_time);
+                    $end   = \Carbon\Carbon::parse($enrollment->schedule->end_time);
+                    $hours = $start->diffInHours($end);
+                    return $hours * 50;
+                });
+
+                $exists = Payment::where('enrollment_id', $firstEnrollment->id)
+                    ->where('billing_month', $billingMonth)
+                    ->exists();
+
+                if ($exists) {
+                    $skipped++;
+                    continue;
                 }
 
-                // 3. Save the total amount for all classes combined
                 Payment::create([
-                    'student_id' => $id,
+                    'enrollment_id' => $firstEnrollment->id,
+                    'student_id'    => $studentId,
+                    'order_id'      => 'ORD-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'amount'        => $totalAmount,
                     'billing_month' => $billingMonth,
-                    'total_amount' => $totalMonthlyHours * $hourlyRate,
-                    'status' => 'unpaid'
+                    'status'        => 'pending',
                 ]);
+
+                $generated++;
             }
         }
 
-        return back()->with('success', 'Monthly invoices generated for all enrolled classes.');
-    }
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function processPayment(Request $request, int $id)
-    {
-        $payment = Payment::findOrFail($id);
-        $payment->update([
-            'payment_method' => $request->method,
-            'transaction_id' => $request->transaction_id, // Add this line
-            'status' => 'paid'
-        ]);
-        return back()->with('success', 'Payment successful via ' . strtoupper($request->method));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-   // In PaymentController.php
-
-    public function history()
-    {
-        // If Admin, see all. If Student, see only theirs.
-        if (Auth::user()->role == 'admin') {
-            $payments = Payment::with('student')->latest()->get();
-        } else {
-            $payments = Payment::where('student_id', auth::id())->latest()->get();
-        }
-
-        $data =
-        [
-            'payments'=>$payments,
-        ];
-
-        return view('payment.history', $data);
-    }
-
-    public function showStudentTotalBill()
-    {
-        // Sum the 'fee' from the 'class' table for all of this student's approved enrollments
-        $totalBill = Enrollment::where('student_id', Auth::id())
-            ->where('status', 'approved')
-            ->join('class', 'enrollments.class_id', '=', 'class.id')
-            ->sum('class.fee');
-
-        return view('payments.index', compact('totalBill'));
-    }
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return back()->with('success', "All classes: {$generated} bills generated, {$skipped} already existed.");
     }
 }

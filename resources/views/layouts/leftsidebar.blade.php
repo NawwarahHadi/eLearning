@@ -58,6 +58,18 @@
                         <span class="menu-title fw-semibold">Feedback</span>
                     </a>
                 </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{{route ('payment.admin-index')}}">
+                        <span class="menu-icon">
+                            <i class="ki-duotone ki-dollar fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
+                        <span class="menu-title fw-semibold">Payment</span>
+                    </a>
+                </div>
                 {{-- <div class="menu-item">
                     <a class="menu-link" href="{{route ('enrollment.admin.index')}}">
                         <span class="menu-icon">
@@ -164,6 +176,18 @@
                             <i class="ki-duotone ki-code fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
                         </span>
                         <span class="menu-title fw-semibold">My Classes</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{{route ('payment.index')}}">
+                        <span class="menu-icon">
+                            <i class="ki-duotone ki-dollar fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
+                        <span class="menu-title fw-semibold">Payment</span>
                     </a>
                 </div>
                 @endif

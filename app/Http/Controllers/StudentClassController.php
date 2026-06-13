@@ -15,9 +15,9 @@ class StudentClassController extends Controller
     {
         $enrolledClasses = Enrollment::with(['class.subject', 'tutor', 'schedule'])
             ->where('student_id', Auth::id())
-            ->where('status', 'approved')
+            ->where('status', 'approve')
             ->get()
-            ->groupBy('class_id'); // This groups multiple schedules into one row
+            ->groupBy('class_id');
 
         return view('student.list-class', compact('enrolledClasses'));
     }
@@ -43,14 +43,14 @@ class StudentClassController extends Controller
     {
         $material = LearningMaterial::findOrFail($id);
 
-        // 1. Map the type to the correct database column and label
+
         if ($type == 'note') {
             $pathInDb = $material->lecture_note;
             $label = 'Lecture Note';
         } elseif ($type == 'exercise') {
             $pathInDb = $material->exercise;
             $label = 'Exercise';
-        } elseif ($type == 'recording') { // Added Recording File logic
+        } elseif ($type == 'recording') {
             $pathInDb = $material->recording_file;
             $label = 'Class Recording';
         } else {
