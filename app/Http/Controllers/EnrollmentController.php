@@ -291,7 +291,13 @@ class EnrollmentController extends Controller
      */
     public function tutorProfile(int $class_id, int $tutor_id)
     {
-        $class = CreateClass::with(['schedules', 'subject'])->findOrFail($class_id);
+        $class = CreateClass::with([
+            'schedules' => function($query) {
+                $query->where('is_temporary', 0);
+            },
+            'subject'
+        ])->findOrFail($class_id);
+
         $tutor = User::with('tutorProfile')->findOrFail($tutor_id);
 
         return view('enrollment.tutor_profile', compact('class', 'tutor'));
@@ -300,27 +306,27 @@ class EnrollmentController extends Controller
      * Submit a new enrollment request.
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'class_id'      => 'required|exists:class,id',
-        // Check users table, not tutor_profiles
-        'tutor_id'      => 'required|exists:class,id',
-        'schedule_id'   => 'required|array',
-        'schedule_id.*' => 'exists:class_schedules,id',
-    ]);
-
-    foreach ($request->schedule_id as $scheduleId) {
-        Enrollment::create([
-            'student_id'  => Auth::id(), // CRITICAL: You missed this!
-            'class_id'    => $request->class_id,
-            'tutor_id'    => $request->tutor_id,
-            'schedule_id' => $scheduleId,
-            'status'      => 'approved', // Auto-approve as we discussed
+    {
+        $request->validate([
+            'class_id'      => 'required|exists:class,id',
+            'tutor_id'      => 'required|exists:users,id',
+            'schedule_id'   => 'required|array|min:1',
+            'schedule_id.*' => 'exists:class_schedules,id', // make sure table name matches
         ]);
-    }
 
-    return redirect()->route('enrollment.index')->with('success', 'Enrollment created successfully!');
-}
+        foreach ($request->schedule_id as $scheduleId) {
+            Enrollment::create([
+                'class_id'    => $request->class_id,
+                'tutor_id'    => $request->tutor_id,
+                'schedule_id' => $scheduleId,
+                'student_id'  => Auth::id(),
+                'status'      => 'approve',
+            ]);
+        }
+
+        return redirect()->route('enrollment.index') ->with('success', 'Enrollment request submitted successfully.');
+
+    }
 
     /**
      * Handle tutor change requests (Canceled old record, approves new).
