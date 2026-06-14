@@ -39,19 +39,19 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/', [WelcomeController::class, 'index']);
+// Route::get('/', [WelcomeController::class, 'index']);
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard/Admin', [DashboardController::class, 'index'])->name('dashboard.admin');
-Route::get('/dashboard/tutor', [DashboardController::class, 'indexTutor'])->name('dashboard.tutor');
-Route::get('/dashboard/student', [DashboardController::class, 'indexStudent'])->name('dashboard.student');
 
 Route::post('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback')->withoutMiddleware([VerifyCsrfToken::class]);
 
 Route::middleware('auth')->group(function () {
 
+    Route::get('/dashboard/Admin', [DashboardController::class, 'index'])->name('dashboard.admin');
+    Route::get('/dashboard/tutor', [DashboardController::class, 'indexTutor'])->name('dashboard.tutor');
+    Route::get('/dashboard/student', [DashboardController::class, 'indexStudent'])->name('dashboard.student');
 
     ##Approval Entry
     Route::prefix('application')->name('application.')->group(function(){

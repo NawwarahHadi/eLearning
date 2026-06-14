@@ -19,7 +19,7 @@ Website: https://www.ppst.kelantan.gov.my
 		<meta property="og:title" content="E-Learning" />
 		<meta property="og:url" content="https://eLearning.com.my/" />
 		<meta property="og:site_name" content="Nawwarah" />
-		<link rel="shortcut icon" href="{{ asset ('metronic/assets/media/logos/sukicon.png')}}" />
+		<link rel="shortcut icon" href="{{ asset('metronic/assets/media/logos/elearning-favicon.png')}}" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
         @yield('css_after')
 		<link href="{{ asset ('metronic/assets/plugins/global/plugins.bundle.css')}}" rel="stylesheet" type="text/css" />

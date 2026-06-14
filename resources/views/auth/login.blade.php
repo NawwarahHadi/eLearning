@@ -262,7 +262,7 @@
 			<!-- Brand hero panel -->
 			<div class="el-hero">
 				<img src="{{ asset('metronic/assets/media/logos/elearning-logo.png')}}" alt="Logo" class="el-hero-logo" />
-				<h2>Tuition Center</h2>
+				<h2 class="text-white">Tuition Center</h2>
 				<p>Learn anytime, anywhere. Access courses, connect with tutors, and grow your skills on one platform.</p>
 			</div>
 

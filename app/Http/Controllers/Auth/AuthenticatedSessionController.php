@@ -26,30 +26,28 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        // 1. Get the authenticated user
         $user = Auth::user();
 
-        // 2. Check if the status is NOT approved
-        if ($user->status !== 'approved') {
+        // if ($user->status !== 'approved') {
+        //     Auth::guard('web')->logout();
+        //     $request->session()->invalidate();
+        //     $request->session()->regenerateToken();
 
-            // Log them out immediately
-            Auth::guard('web')->logout();
+        //     $message = $user->status === 'rejected'
+        //         ? 'Maaf, pendaftaran anda telah ditolak.'
+        //         : 'Akaun anda masih dalam proses kelulusan oleh Admin.';
 
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        //     return redirect()->route('login')->with('status_warning', $message);
+        // }
 
-            // 3. Define the message based on their status
-            $message = $user->status === 'rejected'
-                ? 'Maaf, pendaftaran anda telah ditolak.'
-                : 'Akaun anda masih dalam proses kelulusan oleh Admin.';
-
-            return redirect()->route('login')->with('status_warning', $message);
-        }
-
-        // 4. If approved, proceed as normal
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return match($user->role) {
+            'admin'   => redirect()->route('dashboard.admin'),
+            'tutor'   => redirect()->route('dashboard.tutor'),
+            'student' => redirect()->route('dashboard.student'),
+            default   => redirect()->intended(route('dashboard', absolute: false)),
+        };
     }
     /**
      * Destroy an authenticated session.
