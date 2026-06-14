@@ -38,13 +38,21 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                   <a class="menu-link" href="{{ route('application.indexTutor')}}">
+                    <a class="menu-link" href="{{ route('application.indexTutor') }}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-address-book fs-2">
                                 <span class="path1"></span><span class="path2"></span><span class="path3"></span>
                             </i>
                         </span>
                         <span class="menu-title fw-semibold">Tutor Application</span>
+                        @php
+                            $pendingTutorApps = \App\Models\User::where('role', 'tutor')
+                                ->where('status', 'pending')
+                                ->count();
+                        @endphp
+                        @if($pendingTutorApps > 0)
+                            <span class="badge badge-circle badge-danger ms-2">{{ $pendingTutorApps }}</span>
+                        @endif
                     </a>
                 </div>
                 <div class="menu-item">
@@ -71,14 +79,23 @@
                     </a>
                 </div>
 
-                {{-- <div class="menu-item">
-                    <a class="menu-link" href="{{route ('enrollment.admin.tutorChanges')}}">
+                <div class="menu-item">
+                    <a class="menu-link" href="{{ route('change-tutor.requests') }}">
                         <span class="menu-icon">
                             <i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i>
                         </span>
                         <span class="menu-title fw-semibold">Request Change Tutor</span>
+                        @php
+                            $pendingCount = \App\Models\Enrollment::where('status', 'pending')
+                                ->distinct('student_id', 'class_id')
+                                ->count();
+                        @endphp
+                        @if($pendingCount > 0)
+                            <span class="badge badge-circle badge-danger ms-2">{{ $pendingCount }}</span>
+                        @endif
                     </a>
-                </div> --}}
+                </div>
+
                 <div class="menu-item">
                     <a class="menu-link" href="{{route ('user-management.index')}}">
                         <span class="menu-icon">

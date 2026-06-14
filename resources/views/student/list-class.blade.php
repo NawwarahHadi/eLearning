@@ -136,11 +136,11 @@
 
                             {{-- ACTIONS --}}
                             <td>
-                                {{-- <a href="{{ route('enrollment.changeTutor', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Change Tutor">
+                                <a href="{{ route('change-tutor.index', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Change Tutor">
                                     <i class="ki-duotone ki-update-file text-info fs-1">
                                         <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span>
                                     </i>
-                                </a> --}}
+                                </a>
 
                                 <a href="{{ route('student.class.materials', $firstItem->class_id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" title="Learning Material">
                                     <i class="ki-duotone ki-some-files text-success fs-1">

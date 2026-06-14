@@ -331,23 +331,23 @@ class EnrollmentController extends Controller
     /**
      * Handle tutor change requests (Canceled old record, approves new).
      */
-    public function approveChange(Request $request, int $newEnrollmentId)
-    {
-        $newEnrollment = Enrollment::findOrFail($newEnrollmentId);
+    // public function approveChange(Request $request, int $newEnrollmentId)
+    // {
+    //     $newEnrollment = Enrollment::findOrFail($newEnrollmentId);
 
-        // Cancel the old approved record for the same subject[cite: 1, 2]
-        $oldEnrollment = Enrollment::where('student_id', $newEnrollment->student_id)
-            ->where('class_id', $newEnrollment->class_id)
-            ->where('status', 'approved')
-            ->where('id', '!=', $newEnrollment->id)
-            ->first();
+    //     // Cancel the old approved record for the same subject[cite: 1, 2]
+    //     $oldEnrollment = Enrollment::where('student_id', $newEnrollment->student_id)
+    //         ->where('class_id', $newEnrollment->class_id)
+    //         ->where('status', 'approved')
+    //         ->where('id', '!=', $newEnrollment->id)
+    //         ->first();
 
-        if ($oldEnrollment) {
-            $oldEnrollment->update(['status' => 'rejected']);
-        }
+    //     if ($oldEnrollment) {
+    //         $oldEnrollment->update(['status' => 'rejected']);
+    //     }
 
-        $newEnrollment->update(['status' => 'approved']);
+    //     $newEnrollment->update(['status' => 'approved']);
 
-        return back()->with('success', 'Tutor swap completed successfully.');
-    }
+    //     return back()->with('success', 'Tutor swap completed successfully.');
+    // }
 }

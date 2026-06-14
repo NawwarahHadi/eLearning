@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ChangeTutorController;
 use App\Http\Controllers\ChatController;
 // use App\Http\Controllers\ChatController as ControllersChatController;
 use App\Http\Controllers\ClassManagementController;
@@ -114,6 +115,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/tutor-profile/{class_id}/{tutor_id}', [EnrollmentController::class, 'tutorProfile'])->name('tutor-profile');
         Route::post('/store', [EnrollmentController::class, 'store'])->name('store');
         Route::get('/enrollment/change-tutor/{class_id}', [EnrollmentController::class, 'changeTutorSelection'])->name('changeTutor');
+    });
+
+    ##Change Tutor
+    Route::prefix('change-tutor')->name('change-tutor.')->group(function(){
+        Route::get('/requests', [ChangeTutorController::class, 'pendingRequests'])->name('requests');
+        Route::post('/request-change', [ChangeTutorController::class, 'requestTutorChange'])->name('requestChange');
+        Route::get('/profile/{class_id}/{old_class_id}', [ChangeTutorController::class, 'tutorProfile'])->name('profile');
+        Route::post('/approve-change/{student_id}/{class_id}', [ChangeTutorController::class, 'approveChange'])->name('approveChange');
+        Route::post('/reject-change/{student_id}/{class_id}', [ChangeTutorController::class, 'rejectChange'])->name('rejectChange');
+        Route::get('/{class_id}', [ChangeTutorController::class, 'changeTutorSelection'])->name('index');
     });
 
     ##List of Class
